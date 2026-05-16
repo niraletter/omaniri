@@ -1,0 +1,12 @@
+// App-specific window rules 
+include "~/.local/share/omaniri/default/niri/apps/browser.kdl"
+include "~/.local/share/omaniri/default/niri/apps/localsend.kdl"
+include "~/.local/share/omaniri/default/niri/apps/moonlight.kdl"
+include "~/.local/share/omaniri/default/niri/apps/pip.kdl"
+include "~/.local/share/omaniri/default/niri/apps/qemu.kdl"
+include "~/.local/share/omaniri/default/niri/apps/system.kdl"
+include "~/.local/share/omaniri/default/niri/apps/terminals.kdl"
+include "~/.local/share/omaniri/default/niri/apps/walker.kdl"
+include "~/.local/share/omaniri/default/niri/apps/webcam-overlay.kdl"
+include "~/.local/share/omaniri/default/niri/toggles.kdl"
+

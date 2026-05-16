@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Install Zed Editor and configure it with the current omaniri theme
+
+echo "Installing Zed Editor..."
+omaniri-pkg-add zed omazed
+
+# Apply omaniri theme to Zed
+omazed setup
+
+setsid gtk-launch dev.zed.Zed

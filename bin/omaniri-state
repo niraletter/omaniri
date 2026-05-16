@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# omaniri:summary=Manage persistent state files for omaniri toggles and settings.
+# omaniri:args=<set|clear> <state-name-or-pattern>
+# omaniri:hidden=true
+
+STATE_DIR="$HOME/.local/state/omaniri"
+mkdir -p "$STATE_DIR"
+
+COMMAND="$1"
+STATE_NAME="$2"
+
+if [[ -z $COMMAND ]]; then
+  echo "Usage: omaniri-state <set|clear> <state-name-or-pattern>"
+  exit 1
+fi
+
+if [[ -z $STATE_NAME ]]; then
+  echo "Usage: omaniri-state $COMMAND <state-name>"
+  exit 1
+fi
+
+case "$COMMAND" in
+set) touch "$STATE_DIR/$STATE_NAME" ;;
+clear) find "$STATE_DIR" -maxdepth 1 -type f -name "$STATE_NAME" -delete ;;
+esac

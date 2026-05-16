@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# omaniri:summary=Set the Plymouth boot theme from an omaniri theme
+# omaniri:args=<theme-name>
+# omaniri:requires-sudo=true
+
+# Resolve a theme by name and apply its unlock.png + colors.toml as the
+# Plymouth boot screen via omaniri-plymouth-set.
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: omaniri-plymouth-set-by-theme <theme-name>" >&2
+  exit 1
+fi
+
+theme=$1
+
+if [[ -d ~/.config/omaniri/themes/$theme ]]; then
+  theme_dir=~/.config/omaniri/themes/$theme
+else
+  theme_dir="$OMANIRI_PATH/themes/$theme"
+fi
+
+bg=$(awk -F'"' '/^background/{print $2}' "$theme_dir/colors.toml")
+text=$(awk -F'"' '/^foreground/{print $2}' "$theme_dir/colors.toml")
+
+exec omaniri-plymouth-set "$bg" "$text" "$theme_dir/unlock.png"

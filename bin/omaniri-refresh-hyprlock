@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite the user config for hyprlock with the omaniri default.
+
+omaniri-refresh-config hypr/hyprlock.conf

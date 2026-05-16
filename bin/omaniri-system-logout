@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Log out after closing application windows
+# omaniri:examples=omaniri logout | omaniri system logout
+# omaniri:aliases=omaniri logout
+
+nohup bash -c "sleep 2 && loginctl terminate-user \"$USER\"" >/dev/null 2>&1 &
+
+# Now close all windows
+omaniri-niri-window-close-all
+sleep 1 # Allow apps like Chrome to shutdown correctly

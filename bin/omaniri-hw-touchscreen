@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Print touchscreen status for niri input toggles (always succeeds when present)
+# omaniri:hidden=true
+
+echo touch

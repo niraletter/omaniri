@@ -1,0 +1,26 @@
+// Laptop multimedia keys for volume and LCD brightness (with OSD)
+binds {
+  XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume up" { spawn "omaniri-swayosd-client" "--output-volume" "raise"; }
+  XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="Volume down" { spawn "omaniri-swayosd-client" "--output-volume" "lower"; }
+  XF86AudioMute allow-when-locked=true hotkey-overlay-title="Mute" { spawn "omaniri-swayosd-client" "--output-volume" "mute-toggle"; }
+  XF86AudioMicMute allow-when-locked=true hotkey-overlay-title="Mute microphone" { spawn "omaniri-audio-input-mute"; }
+  XF86MonBrightnessUp allow-when-locked=true hotkey-overlay-title="Brightness up" { spawn "omaniri-brightness-display" "+5%"; }
+  XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness down" { spawn "omaniri-brightness-display" "5%-"; }
+  Shift+XF86MonBrightnessUp allow-when-locked=true hotkey-overlay-title="Brightness maximum" { spawn "omaniri-brightness-display" "100%"; }
+  Shift+XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness minimum" { spawn "omaniri-brightness-display" "1%"; }
+  XF86KbdBrightnessUp allow-when-locked=true hotkey-overlay-title="Keyboard brightness up" { spawn "omaniri-brightness-keyboard" "up"; }
+  XF86KbdBrightnessDown allow-when-locked=true hotkey-overlay-title="Keyboard brightness down" { spawn "omaniri-brightness-keyboard" "down"; }
+  XF86KbdLightOnOff allow-when-locked=true hotkey-overlay-title="Keyboard backlight cycle" { spawn "omaniri-brightness-keyboard" "cycle"; }
+  XF86TouchpadToggle allow-when-locked=true hotkey-overlay-title="Toggle touchpad" { spawn "omaniri-toggle-touchpad"; }
+  XF86TouchpadOn allow-when-locked=true hotkey-overlay-title="Enable touchpad" { spawn "omaniri-toggle-touchpad" "on"; }
+  XF86TouchpadOff allow-when-locked=true hotkey-overlay-title="Disable touchpad" { spawn "omaniri-toggle-touchpad" "off"; }
+
+  // Precise 1% multimedia adjustments with Alt modifier
+  Alt+XF86AudioRaiseVolume allow-when-locked=true hotkey-overlay-title="Volume up precise" { spawn "omaniri-swayosd-client" "--output-volume" "+1"; }
+  Alt+XF86AudioLowerVolume allow-when-locked=true hotkey-overlay-title="Volume down precise" { spawn "omaniri-swayosd-client" "--output-volume" "-1"; }
+  Alt+XF86MonBrightnessUp allow-when-locked=true hotkey-overlay-title="Brightness up precise" { spawn "omaniri-brightness-display" "+1%"; }
+  Alt+XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness down precise" { spawn "omaniri-brightness-display" "1%-"; }
+
+  // Switch audio output with Mod + Mute
+  Mod+XF86AudioMute allow-when-locked=true hotkey-overlay-title="Switch audio output" { spawn "omaniri-audio-output-switch"; }
+}

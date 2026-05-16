@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# omaniri:summary=Wake displays and restore brightness after idle
+# omaniri:group=system
+# omaniri:name=wake
+# omaniri:examples=omaniri system wake
+
+omaniri-brightness-display on
+omaniri-brightness-keyboard restore

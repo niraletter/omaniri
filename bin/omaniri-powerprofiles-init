@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# omaniri:summary=Set the correct power profile on boot based on current AC/battery state.
+
+if omaniri-battery-present && ! omaniri-ac-present; then
+  omaniri-powerprofiles-set battery
+else
+  omaniri-powerprofiles-set ac
+fi

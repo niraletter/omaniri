@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omaniri:summary=Reload niri configuration (used by omaniri theme switching).
+# omaniri:group=niri
+# omaniri:group=niri
+
+omaniri-cmd-present niri || exit 0
+niri msg action load-config-file >/dev/null 2>&1 || true

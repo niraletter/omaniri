@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Reload mako configuration (used by the omaniri theme switching).
+
+makoctl reload

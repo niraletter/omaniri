@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Dismiss the CachyOS release Waybar icon until the next blog release
+
+omaniri-update-available --ack
+pkill -RTMIN+7 waybar
+exit 0

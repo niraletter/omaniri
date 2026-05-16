@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Show current monospace font
+# omaniri:examples=omaniri font current
+
+grep -oP 'font-family:\s*["'\'']?\K[^;"'\'']+' ~/.config/waybar/style.css | head -n1

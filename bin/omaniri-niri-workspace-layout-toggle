@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle tabbed column display on the focused column (niri layout)
+# omaniri:group=niri
+
+omaniri-cmd-present niri || exit 0
+
+niri msg action toggle-column-tabbed-display >/dev/null 2>&1 || true
+notify-send -u low "󱂬    Toggled column tabbed display"

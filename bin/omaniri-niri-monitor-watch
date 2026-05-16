@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Watch niri output events and recover monitor toggles when a monitor is removed
+# omaniri:group=niri
+
+omaniri-cmd-present niri || exit 0
+
+niri msg --json event-stream 2>/dev/null | jq -rc '
+  select(type == "object")
+  | .OutputRemoved // .output-removed // empty
+  | select(. != null)
+' | while read -r _; do
+  omaniri-niri-monitor-internal recover
+  omaniri-niri-monitor-internal-mirror recover
+done

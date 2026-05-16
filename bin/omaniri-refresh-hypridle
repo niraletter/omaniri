@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite the user config for hypridle with the omaniri default and restart the service.
+
+omaniri-refresh-config hypr/hypridle.conf
+omaniri-restart-hypridle

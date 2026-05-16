@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Refresh the SDDM theme from default
+# omaniri:requires-sudo=true
+
+sudo rm -rf /usr/share/sddm/themes/omaniri
+sudo cp -r $OMANIRI_PATH/default/sddm/omaniri /usr/share/sddm/themes/omaniri

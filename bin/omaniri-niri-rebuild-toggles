@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# omaniri:summary=Rebuild the aggregated niri toggles include file
+# omaniri:group=niri
+# omaniri:hidden=true
+
+TOGGLE_DIR="$HOME/.local/state/omaniri/toggles/niri"
+OUT="$TOGGLE_DIR/_includes.kdl"
+
+mkdir -p "$TOGGLE_DIR"
+: >"$OUT"
+
+for f in "$TOGGLE_DIR"/*.kdl; do
+  [[ -f $f ]] || continue
+  [[ $f == "$OUT" ]] && continue
+  cat "$f" >>"$OUT"
+  echo >>"$OUT"
+done
+
+omaniri-cmd-present niri && niri msg action load-config-file >/dev/null 2>&1 || true

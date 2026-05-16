@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Launch the omaniri wifi controls (provided by the Impala TUI).
+
+rfkill unblock wifi
+omaniri-launch-or-focus-tui impala

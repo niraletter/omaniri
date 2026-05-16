@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# omaniri:summary=No-op now that omaniri-update-perform is responsible for idle management.
+# omaniri:hidden=true

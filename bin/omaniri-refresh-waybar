@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omaniri:summary=Reset Waybar config to omaniri defaults
+# omaniri:examples=omaniri refresh waybar
+
+omaniri-refresh-config waybar/config.jsonc
+omaniri-refresh-config waybar/style.css
+omaniri-restart-waybar

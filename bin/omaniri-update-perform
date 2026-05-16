@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# omaniri:summary=Run the full omaniri update pipeline
+# omaniri:requires-sudo=true
+
+set -e
+
+# Prevent idle lock during updates
+if pgrep -x hypridle >/dev/null; then
+  pkill -x hypridle
+  RESTART_HYPRIDLE=1
+fi
+
+# Perform all update steps
+omaniri-update-keyring
+omaniri-update-available-reset
+omaniri-update-system-pkgs
+omaniri-migrate
+omaniri-update-aur-pkgs
+omaniri-update-orphan-pkgs
+omaniri-hook post-update
+
+omaniri-update-analyze-logs
+
+omaniri-update-restart
+
+if [[ ${RESTART_HYPRIDLE:-0} == 1 ]]; then
+  setsid hypridle >/dev/null 2>&1 &
+fi

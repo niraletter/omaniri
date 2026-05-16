@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# omaniri:summary=Finish the installation of omaniri with items that can only be done after logging in.
+# omaniri:requires-sudo=true
+
+set -e
+
+FIRST_RUN_MODE=~/.local/state/omaniri/first-run.mode
+
+if [[ -f $FIRST_RUN_MODE ]]; then
+  rm -f "$FIRST_RUN_MODE"
+
+  bash "$OMANIRI_PATH/install/first-run/battery-monitor.sh"
+  bash "$OMANIRI_PATH/install/first-run/recover-internal-monitor.sh"
+  bash "$OMANIRI_PATH/install/first-run/cleanup-reboot-sudoers.sh"
+  bash "$OMANIRI_PATH/install/first-run/firewall.sh"
+  bash "$OMANIRI_PATH/install/first-run/dns-resolver.sh"
+  bash "$OMANIRI_PATH/install/first-run/gnome-theme.sh"
+  bash "$OMANIRI_PATH/install/first-run/gdk-scale.sh"
+  bash "$OMANIRI_PATH/install/first-run/swayosd.sh"
+  bash "$OMANIRI_PATH/install/first-run/gtk-primary-paste.sh"
+  bash "$OMANIRI_PATH/install/first-run/elephant.sh"
+  omaniri-hook-install post-update "$OMANIRI_PATH/install/first-run/install-voxtype.hook"
+  sudo rm -f /etc/sudoers.d/first-run
+
+  bash "$OMANIRI_PATH/install/first-run/welcome.sh"
+  bash "$OMANIRI_PATH/install/first-run/wifi.sh"
+fi

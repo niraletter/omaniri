@@ -1,0 +1,240 @@
+#!/bin/bash
+
+# omaniri:summary=Start or stop screen recording
+# omaniri:group=capture
+# omaniri:args=[--portal] [--fullscreen] [--with-desktop-audio] [--with-microphone-audio] [--with-webcam] [--webcam-device=<device>] [--resolution=<size>] [--stop-recording]
+# omaniri:examples=omaniri screenrecord --portal | omaniri capture screenrecord --fullscreen --with-desktop-audio
+# omaniri:aliases=omaniri screenrecord
+#
+# Uses gpu-screen-recorder (see man gpu-screen-recorder).
+# Default: slurp + KMS capture (no portal). --portal: GNOME/xdg ScreenCast dialog (PipeWire).
+# --fullscreen: whole focused monitor without slurp. Env OMANIRI_SCREENRECORD_USE_PORTAL=true
+# is equivalent to --portal.
+# Env: OMANIRI_SCREENRECORD_DEBUG=true logs to /tmp/omaniri-screenrecord.log
+
+OMANIRI_PATH="${OMANIRI_PATH:-$HOME/.local/share/omaniri}"
+source "$OMANIRI_PATH/default/bash/fns/capture"
+
+[[ -f ~/.config/user-dirs.dirs ]] && source ~/.config/user-dirs.dirs
+OUTPUT_DIR="${OMANIRI_SCREENRECORD_DIR:-${XDG_VIDEOS_DIR:-$HOME/Videos}}"
+
+if [[ ! -d $OUTPUT_DIR ]]; then
+  notify-send "Screen recording directory does not exist: $OUTPUT_DIR" -u critical -t 3000
+  exit 1
+fi
+
+DESKTOP_AUDIO="false"
+MICROPHONE_AUDIO="false"
+WEBCAM="false"
+WEBCAM_DEVICE=""
+RESOLUTION=""
+USE_PORTAL="false"
+FULLSCREEN="false"
+STOP_RECORDING="false"
+RECORDING_FILE="/tmp/omaniri-screenrecord-filename"
+LOG_FILE=$([[ ${OMANIRI_SCREENRECORD_DEBUG:-false} == "true" ]] && echo "/tmp/omaniri-screenrecord.log" || echo "/dev/null")
+
+for arg in "$@"; do
+  case "$arg" in
+  --with-desktop-audio) DESKTOP_AUDIO="true" ;;
+  --with-microphone-audio) MICROPHONE_AUDIO="true" ;;
+  --with-webcam) WEBCAM="true" ;;
+  --webcam-device=*) WEBCAM_DEVICE="${arg#*=}" ;;
+  --resolution=*) RESOLUTION="${arg#*=}" ;;
+  --portal) USE_PORTAL="true" ;;
+  --fullscreen) FULLSCREEN="true" ;;
+  --stop-recording) STOP_RECORDING="true" ;;
+  esac
+done
+
+[[ ${OMANIRI_SCREENRECORD_USE_PORTAL:-false} == "true" ]] && USE_PORTAL="true"
+[[ $USE_PORTAL == "true" ]] && FULLSCREEN="false"
+
+start_webcam_overlay() {
+  cleanup_webcam
+
+  if [[ -z $WEBCAM_DEVICE ]]; then
+    WEBCAM_DEVICE=$(v4l2-ctl --list-devices 2>/dev/null | grep -m1 "^[[:space:]]*/dev/video" | tr -d '\t')
+    if [[ -z $WEBCAM_DEVICE ]]; then
+      notify-send "No webcam devices found" -u critical -t 3000
+      return 1
+    fi
+  fi
+
+  local scale target_width preferred_resolutions video_size_arg available_formats resolution
+  scale=$(niri msg -j focused-output 2>/dev/null | jq -r '
+    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical.scale // 1
+    else 1 end
+  ')
+  target_width=$(awk "BEGIN {printf \"%.0f\", 360 * $scale}")
+
+  preferred_resolutions=("640x360" "1280x720" "1920x1080")
+  video_size_arg=""
+  available_formats=$(v4l2-ctl --list-formats-ext -d "$WEBCAM_DEVICE" 2>/dev/null)
+
+  for resolution in "${preferred_resolutions[@]}"; do
+    if echo "$available_formats" | grep -q "$resolution"; then
+      video_size_arg="-video_size $resolution"
+      break
+    fi
+  done
+
+  ffplay -f v4l2 $video_size_arg -framerate 30 "$WEBCAM_DEVICE" \
+    -vf "crop=iw/2:ih,scale=${target_width}:-1" \
+    -window_title "WebcamOverlay" \
+    -noborder \
+    -fflags nobuffer -flags low_delay \
+    -probesize 32 -analyzeduration 0 \
+    -loglevel quiet &
+  sleep 1
+}
+
+cleanup_webcam() {
+  pkill -f "WebcamOverlay" 2>/dev/null
+}
+
+start_screenrecording() {
+  local capture_args=() target
+
+  if ! omaniri_capture_niri_available; then
+    notify-send "Screen recording" "niri is not running" -u critical -t 5000
+    return 1
+  fi
+
+  if ! omaniri-cmd-present gpu-screen-recorder; then
+    notify-send "Screen recording" "gpu-screen-recorder is not installed" -u critical -t 5000
+    return 1
+  fi
+
+  if [[ $USE_PORTAL == "true" ]]; then
+    target="portal"
+    capture_args=(-w portal -s "${RESOLUTION:-$(omaniri_capture_default_gsr_resolution)}")
+  elif [[ $FULLSCREEN == "true" ]]; then
+    target=$(omaniri_capture_focused_monitor_target) || {
+      notify-send "Screen recording" "Could not detect focused monitor" -u critical -t 5000
+      return 1
+    }
+    capture_args=(-w "${target#monitor:}" -s "${RESOLUTION:-$(omaniri_capture_default_gsr_resolution)}")
+  else
+    target=$(omaniri_capture_select_gsr_target) || return 1
+
+    case $target in
+    monitor:*)
+      capture_args=(-w "${target#monitor:}" -s "${RESOLUTION:-$(omaniri_capture_default_gsr_resolution)}")
+      ;;
+    region:*)
+      # Same format as: gpu-screen-recorder -w "$(slurp -f '%wx%h+%x+%y')" …
+      capture_args=(-w "${target#region:}")
+      [[ -n $RESOLUTION ]] && capture_args+=(-s "$RESOLUTION")
+      ;;
+    *)
+      notify-send "Screen recording" "Unknown capture target: $target" -u critical -t 5000
+      return 1
+      ;;
+    esac
+  fi
+
+  [[ $WEBCAM == "true" ]] && start_webcam_overlay
+
+  local filename="$OUTPUT_DIR/screenrecording-$(date +'%Y-%m-%d_%H-%M-%S').mp4"
+  local audio_devices="" audio_args=()
+
+  [[ $DESKTOP_AUDIO == "true" ]] && audio_devices+="default_output"
+
+  if [[ $MICROPHONE_AUDIO == "true" ]]; then
+    [[ -n $audio_devices ]] && audio_devices+="|"
+    audio_devices+="default_input"
+  fi
+
+  [[ -n $audio_devices ]] && audio_args+=(-a "$audio_devices" -ac aac)
+
+  echo "===== $(date '+%F %T') args: ${capture_args[*]} target: $target =====" >>"$LOG_FILE"
+  gpu-screen-recorder "${capture_args[@]}" -k auto -f 60 -fm cfr -fallback-cpu-encoding yes -o "$filename" "${audio_args[@]}" 2>>"$LOG_FILE" &
+  local pid=$!
+
+  while kill -0 $pid 2>/dev/null && [[ ! -f $filename ]]; do
+    sleep 0.2
+  done
+
+  if kill -0 $pid 2>/dev/null; then
+    echo "$filename" >"$RECORDING_FILE"
+    toggle_screenrecording_indicator
+  else
+    cleanup_webcam
+    notify-send "Screen recording failed" "gpu-screen-recorder exited immediately. Set OMANIRI_SCREENRECORD_DEBUG=true and check /tmp/omaniri-screenrecord.log" -u critical -t 8000
+    return 1
+  fi
+}
+
+stop_screenrecording() {
+  pkill -SIGINT -f "^gpu-screen-recorder"
+
+  local count=0
+  while pgrep -f "^gpu-screen-recorder" >/dev/null && ((count < 50)); do
+    sleep 0.1
+    count=$((count + 1))
+  done
+
+  toggle_screenrecording_indicator
+  cleanup_webcam
+
+  if pgrep -f "^gpu-screen-recorder" >/dev/null; then
+    pkill -9 -f "^gpu-screen-recorder"
+    notify-send "Screen recording error" "Recording process had to be force-killed. Video may be corrupted." -u critical -t 5000
+  else
+    finalize_recording
+    local filename preview
+    filename=$(cat "$RECORDING_FILE" 2>/dev/null)
+    echo "$filename"
+    preview="${filename%.mp4}-preview.png"
+
+    ffmpeg -y -i "$filename" -ss 00:00:00.1 -vframes 1 -q:v 2 "$preview" -loglevel quiet 2>/dev/null
+
+    (
+      ACTION=$(notify-send "Screen recording saved" "Open with Super + Alt + , (or click this)" -t 10000 -i "${preview:-$filename}" -A "default=open")
+      [[ $ACTION == "default" ]] && mpv "$filename"
+      rm -f "$preview"
+    ) &
+  fi
+
+  rm -f "$RECORDING_FILE"
+}
+
+toggle_screenrecording_indicator() {
+  pkill -RTMIN+8 waybar
+}
+
+screenrecording_active() {
+  pgrep -f "^gpu-screen-recorder" >/dev/null
+}
+
+finalize_recording() {
+  local latest
+  latest=$(cat "$RECORDING_FILE" 2>/dev/null)
+  [[ -f $latest ]] || return
+
+  local video_codec=(-c:v copy)
+  if ffprobe -v error -select_streams v:0 -read_intervals %+0.2 -show_entries packet=flags -of csv=p=0 "$latest" 2>/dev/null | grep -q D; then
+    video_codec=(-c:v libx264 -preset veryfast -crf 20)
+  fi
+
+  local args=(-y -ss 0.1 -i "$latest" "${video_codec[@]}")
+  if ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$latest" 2>/dev/null | grep -q audio; then
+    args+=(-af "volume=enable='lt(t,0.4)':volume=0,afade=t=in:st=0.4:d=0.05,loudnorm=I=-14:TP=-1.5:LRA=11")
+  fi
+
+  local processed="${latest%.mp4}-processed.mp4"
+  if ffmpeg "${args[@]}" "$processed" -loglevel quiet 2>/dev/null; then
+    mv "$processed" "$latest"
+  else
+    rm -f "$processed"
+  fi
+}
+
+if screenrecording_active; then
+  stop_screenrecording
+elif [[ $STOP_RECORDING == "true" ]]; then
+  exit 1
+else
+  start_screenrecording || cleanup_webcam
+fi

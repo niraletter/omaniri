@@ -1,0 +1,129 @@
+# Capture helpers for niri (grim + slurp + gpu-screen-recorder). Source only.
+
+omaniri_capture_niri_available() {
+  omaniri-cmd-present niri && pgrep -x niri >/dev/null 2>&1
+}
+
+# Monitor + floating-window rectangles for slurp, format: "X,Y WxH" (logical coords).
+# Tiled windows without tile_pos_in_workspace_view are omitted (niri IPC limitation).
+omaniri_capture_get_rectangles() {
+  local ws out_x out_y
+
+  omaniri_capture_niri_available || return 1
+
+  ws=$(niri msg -j focused-window 2>/dev/null | jq -r '
+    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .workspace_id // empty
+    else empty end
+  ')
+  read -r out_x out_y < <(niri msg -j focused-output 2>/dev/null | jq -r '
+    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical | [.x, .y] | @tsv
+    else "0\t0" end
+  ')
+
+  niri msg -j focused-output 2>/dev/null | jq -r '
+    if .Ok then (.Ok | if type == "object" then . else .[0] end) else empty end
+    | .logical as $l |
+    "\($l.x),\($l.y) \($l.width | floor)x\($l.height | floor)"
+  '
+
+  niri msg -j windows 2>/dev/null | jq -r --argjson ws "${ws:-0}" --argjson ox "${out_x:-0}" --argjson oy "${out_y:-0}" '
+    if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+    | .[] | select(.workspace_id == $ws)
+    | .layout.tile_pos_in_workspace_view as $p | .layout.tile_size as $s
+    | select($p != null and $s != null)
+    | "\(($ox + $p[0]) | floor),\(($oy + $p[1]) | floor) \($s[0] | floor)x\($s[1] | floor)"
+  '
+}
+
+# Freeze the screen under slurp (optional; hyprpicker uses wlr screencopy when available).
+omaniri_capture_freeze_start() {
+  if omaniri-cmd-present hyprpicker; then
+    hyprpicker -r -z >/dev/null 2>&1 &
+    echo $!
+  fi
+}
+
+omaniri_capture_freeze_stop() {
+  local pid=$1
+  [[ -n $pid ]] && kill "$pid" 2>/dev/null
+}
+
+# Snap tiny slurp drags to the rectangle under the cursor. Args: selection rects.
+omaniri_capture_snap_selection() {
+  local selection=$1 rects=$2
+
+  [[ -n $selection ]] || return 1
+  [[ $selection =~ ^(-?[0-9]+),(-?[0-9]+)[[:space:]]([0-9]+)x([0-9]+)$ ]] || return 1
+  local sx=${BASH_REMATCH[1]} sy=${BASH_REMATCH[2]}
+  local sw=${BASH_REMATCH[3]} sh=${BASH_REMATCH[4]}
+
+  if ((sw * sh < 20)); then
+    while IFS= read -r rect; do
+      [[ $rect =~ ^(-?[0-9]+),(-?[0-9]+)[[:space:]]([0-9]+)x([0-9]+)$ ]] || continue
+      local rx=${BASH_REMATCH[1]} ry=${BASH_REMATCH[2]}
+      local rw=${BASH_REMATCH[3]} rh=${BASH_REMATCH[4]}
+      if ((sx >= rx && sx < rx + rw && sy >= ry && sy < ry + rh)); then
+        echo "${rx},${ry} ${rw}x${rh}"
+        return 0
+      fi
+    done <<<"$rects"
+  fi
+
+  echo "$selection"
+}
+
+# gpu-screen-recorder -w target: monitor:NAME or region:WxH+X+Y (see man gpu-screen-recorder).
+omaniri_capture_select_gsr_target() {
+  local rects selection monitor
+  rects=$(omaniri_capture_get_rectangles) || return 1
+
+  local picker_pid
+  picker_pid=$(omaniri_capture_freeze_start)
+  sleep .1
+  selection=$(echo "$rects" | slurp 2>/dev/null)
+  omaniri_capture_freeze_stop "$picker_pid"
+
+  selection=$(omaniri_capture_snap_selection "$selection" "$rects") || return 1
+
+  [[ $selection =~ ^(-?[0-9]+),(-?[0-9]+)[[:space:]]([0-9]+)x([0-9]+)$ ]] || return 1
+  local sx=${BASH_REMATCH[1]} sy=${BASH_REMATCH[2]}
+  local sw=${BASH_REMATCH[3]} sh=${BASH_REMATCH[4]}
+
+  monitor=$(niri msg -j outputs 2>/dev/null | jq -r --argjson x "$sx" --argjson y "$sy" --argjson w "$sw" --argjson h "$sh" '
+    if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+    | .[] | select(.logical != null)
+    | select(.logical.x == $x and .logical.y == $y and (.logical.width | floor) == $w and (.logical.height | floor) == $h)
+    | .name
+    ' | head -1)
+
+  if [[ -n $monitor ]]; then
+    echo "monitor:$monitor"
+    return 0
+  fi
+
+  echo "region:${sw}x${sh}+${sx}+${sy}"
+}
+
+# Whole focused monitor (no slurp). Output: monitor:NAME
+omaniri_capture_focused_monitor_target() {
+  local name
+  name=$(niri msg -j focused-output 2>/dev/null | jq -r '
+    if .Ok then (.Ok | if type == "object" then .name else .[0].name end)
+    else empty end
+  ')
+  [[ -n $name ]] || return 1
+  echo "monitor:$name"
+}
+
+omaniri_capture_default_gsr_resolution() {
+  local width height
+  read -r width height < <(niri msg -j focused-output 2>/dev/null | jq -r '
+    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical | "\(.width) \(.height)"
+    else "0 0" end
+  ')
+  if ((width > 3840 || height > 2160)); then
+    echo "3840x2160"
+  else
+    echo "0x0"
+  fi
+}

@@ -1,0 +1,12 @@
+// Picture-in-picture overlays
+window-rule {
+    match title="(Picture.?in.?[Pp]icture)"
+    open-floating true
+    default-column-width { fixed 600; }
+    default-window-height { fixed 338; }
+    opacity 1.0
+    default-floating-position x=40 y=40 relative-to="top-right"
+    border {
+        off
+    }
+}

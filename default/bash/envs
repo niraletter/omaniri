@@ -1,0 +1,14 @@
+# Editor used by CLI
+if [[ -f ~/.config/omaniri/default-editor ]]; then
+  export EDITOR=$(head -n 1 ~/.config/omaniri/default-editor)
+fi
+export SUDO_EDITOR="$EDITOR"
+export BAT_THEME=ansi
+
+# Color man pages with bat
+export MANROFFOPT="-c"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+# omaniri paths for non-graphical sessions (e.g. SSH) too
+export OMANIRI_PATH=$HOME/.local/share/omaniri
+export PATH=$OMANIRI_PATH/bin:$PATH:$HOME/.local/bin

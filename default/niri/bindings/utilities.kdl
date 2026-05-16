@@ -1,0 +1,73 @@
+// Menus
+binds {
+  Mod+Space hotkey-overlay-title="Launch apps" { spawn "omaniri-launch-walker"; }
+  Mod+Ctrl+E hotkey-overlay-title="Emoji picker" { spawn "omaniri-launch-walker" "-m" "symbols"; }
+  Mod+Ctrl+C hotkey-overlay-title="Capture menu" { spawn "omaniri-menu" "capture"; }
+  Mod+Ctrl+O hotkey-overlay-title="Toggle menu" { spawn "omaniri-menu" "toggle"; }
+  Mod+Ctrl+H hotkey-overlay-title="Hardware menu" { spawn "omaniri-menu" "hardware"; }
+  Mod+Alt+Space hotkey-overlay-title="omaniri menu" { spawn "omaniri-menu"; }
+  Mod+Escape hotkey-overlay-title="System menu" { spawn "omaniri-menu" "system"; }
+  XF86PowerOff allow-when-locked=true hotkey-overlay-title="Power menu" { spawn "omaniri-menu" "system"; }
+  Mod+K hotkey-overlay-title="Show key bindings" { spawn "omaniri-menu-keybindings"; }
+  Mod+Shift+K hotkey-overlay-title="niri key bindings window"{ show-hotkey-overlay; }
+
+  // Aesthetics
+  Mod+Shift+Space hotkey-overlay-title="Toggle top bar" { spawn "omaniri-toggle-waybar"; }
+  Mod+Ctrl+Space hotkey-overlay-title="Theme background menu" { spawn "omaniri-menu" "background"; }
+  Mod+Shift+Ctrl+Space hotkey-overlay-title="Theme menu" { spawn "omaniri-menu" "theme"; }
+  Mod+Backspace hotkey-overlay-title="Toggle window transparency" { spawn "omaniri-niri-window-transparency-toggle"; }
+
+  // Notifications
+  Mod+Comma hotkey-overlay-title="Dismiss last notification" { spawn "makoctl" "dismiss"; }
+  Mod+Shift+Comma hotkey-overlay-title="Dismiss all notifications" { spawn "makoctl" "dismiss" "--all"; }
+  Mod+Ctrl+Comma hotkey-overlay-title="Toggle silencing notifications" { spawn "omaniri-toggle-notification-silencing"; }
+  Mod+Alt+Comma hotkey-overlay-title="Invoke last notification" { spawn "makoctl" "invoke"; }
+  Mod+Shift+Alt+Comma hotkey-overlay-title="Restore last notification" { spawn "makoctl" "restore"; }
+
+  // Toggles
+  Mod+Ctrl+I hotkey-overlay-title="Toggle locking on idle" { spawn "omaniri-toggle-idle"; }
+  Mod+Ctrl+N hotkey-overlay-title="Toggle nightlight" { spawn "omaniri-toggle-nightlight"; }
+  Mod+Ctrl+Delete hotkey-overlay-title="Toggle laptop display" { spawn "omaniri-niri-monitor-internal" "toggle"; }
+  Mod+Ctrl+Alt+Delete hotkey-overlay-title="Toggle laptop display mirroring" { spawn "omaniri-niri-monitor-internal-mirror" "toggle"; }
+  // Hypr lid-switch binds have no niri equivalent; use omaniri-niri-monitor-watch or a systemd path unit instead.
+
+  // Captures
+  Mod+Shift+S hotkey-overlay-title="Screenshot" { spawn "omaniri-capture-screenshot"; }
+  Alt+Print hotkey-overlay-title="Screenrecording" { spawn "omaniri-menu" "screenrecord"; }
+  Print hotkey-overlay-title="Screen record (portal, desktop audio)" { spawn "omaniri-capture-screenrecording" "--portal" "--with-desktop-audio"; }
+  Mod+Print hotkey-overlay-title="Color picker" { spawn-sh "pkill hyprpicker || hyprpicker -a"; }
+  Mod+Ctrl+Print hotkey-overlay-title="Extract text (OCR) from screenshot" { spawn "omaniri-capture-text-extraction"; }
+
+  // File sharing
+  Mod+Ctrl+S hotkey-overlay-title="Share" { spawn "omaniri-menu" "share"; }
+
+  // Transcoding
+  Mod+Ctrl+Period hotkey-overlay-title="Transcode" { spawn "omaniri-transcode"; }
+
+  // Reminders
+  Mod+Ctrl+R hotkey-overlay-title="Set reminder" { spawn "omaniri-menu" "reminder-set"; }
+  Mod+Ctrl+Alt+R hotkey-overlay-title="Show reminders" { spawn "omaniri-reminder" "show"; }
+  Mod+Shift+Ctrl+R hotkey-overlay-title="Clear reminders" { spawn "omaniri-reminder" "clear"; }
+
+  // Waybar-less information
+  Mod+Ctrl+Alt+T hotkey-overlay-title="Show time" { spawn-sh 'notify-send -u low "    $(date +"%A %H:%M  ·  %d %B %Y  ·  Week %V")"'; }
+  Mod+Ctrl+Alt+B hotkey-overlay-title="Show battery remaining" { spawn-sh "notify-send -u low \"$(omaniri-battery-status)\""; }
+  Mod+Ctrl+Alt+W hotkey-overlay-title="Show weather" { spawn-sh "notify-send -u low \"$(omaniri-weather-status)\""; }
+
+  // Control panels
+  Mod+Ctrl+A hotkey-overlay-title="Audio controls" { spawn "omaniri-launch-audio"; }
+  Mod+Ctrl+B hotkey-overlay-title="Bluetooth controls" { spawn "omaniri-launch-bluetooth"; }
+  Mod+Ctrl+W hotkey-overlay-title="Wifi controls" { spawn "omaniri-launch-wifi"; }
+  Mod+Ctrl+T hotkey-overlay-title="Activity" { spawn "omaniri-launch-tui" "btop"; }
+
+  // Dictation
+  Mod+Ctrl+X hotkey-overlay-title="Toggle dictation" { spawn "voxtype" "record" "toggle"; }
+  F9 hotkey-overlay-title="Start dictation (push-to-talk)" { spawn "voxtype" "record" "start"; }
+
+  // Zoom (wooz)
+  Mod+Ctrl+Z hotkey-overlay-title="Zoom In" { spawn-sh "wooz --zoom $(wooz --get-zoom | awk '{print $1 + 1}')"; }
+  Mod+Ctrl+Alt+Z hotkey-overlay-title="Reset Zoom" { spawn "wooz" "--set-zoom" "1"; }
+
+  // Lock system
+  Mod+Ctrl+L hotkey-overlay-title="Lock system" { spawn "omaniri-system-lock"; }
+}

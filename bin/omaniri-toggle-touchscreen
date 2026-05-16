@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# omaniri:summary=Enable, disable, or toggle the touchscreen
+# omaniri:args=[on|off|toggle]
+
+STATE_CONF="$HOME/.local/state/omaniri/toggles/niri/touchscreen-disabled.kdl"
+
+enable() {
+  rm -f "$STATE_CONF"
+  omaniri-niri-rebuild-toggles
+  omaniri-swayosd-client --custom-icon input-touchscreen-symbolic --custom-message "Touchscreen enabled"
+}
+
+disable() {
+  mkdir -p "$(dirname "$STATE_CONF")"
+  cat >"$STATE_CONF" <<'EOF'
+input {
+    touch {
+        off
+    }
+}
+EOF
+  omaniri-niri-rebuild-toggles
+  omaniri-swayosd-client --custom-icon input-touchscreen-disabled-symbolic --custom-message "Touchscreen disabled"
+}
+
+case "${1:-toggle}" in
+  on) enable ;;
+  off) disable ;;
+  toggle) if [[ -f $STATE_CONF ]]; then enable; else disable; fi ;;
+esac

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Restart the hypridle service (used for idle detection and auto-lock).
+
+omaniri-restart-app hypridle

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# omaniri:summary=Prompt for required reboot or service restarts after updates
+
+echo
+
+running_kernel=$(uname -r)
+kernel_updated=true
+
+for kernel in /usr/lib/modules/*/vmlinuz; do
+  if [[ -f $kernel ]] && pacman -Qo "$kernel" &>/dev/null; then
+    installed_kernel=$(basename "$(dirname "$kernel")")
+
+    if [[ $installed_kernel == $running_kernel ]]; then
+      kernel_updated=false
+      break
+    fi
+  fi
+done
+
+if [[ $kernel_updated == "true" ]]; then
+  gum confirm "Linux kernel has been updated. Reboot?" && omaniri-system-reboot
+elif [[ -f $HOME/.local/state/omaniri/reboot-required ]]; then
+  gum confirm "Updates require reboot. Ready?" && omaniri-system-reboot
+fi
+
+running_niri=$(readlink /proc/$(pgrep -x niri)/exe 2>/dev/null)
+if [[ $running_niri == *"(deleted)"* ]]; then
+  gum confirm "niri has been updated. Reboot?" && omaniri-system-reboot
+fi
+
+for file in "$HOME"/.local/state/omaniri/restart-*-required; do
+  if [[ -f $file ]]; then
+    filename=$(basename "$file")
+    service=$(echo "$filename" | sed 's/restart-\(.*\)-required/\1/')
+    echo "Restarting $service"
+    omaniri-state clear "$filename"
+    omaniri-restart-"$service"
+  fi
+done

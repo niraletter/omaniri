@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite the user config for fastfetch with the omaniri default.
+
+omaniri-refresh-config fastfetch/config.jsonc

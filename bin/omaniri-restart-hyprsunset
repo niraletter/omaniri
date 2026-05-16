@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Restart the hyprsunset service (used for blue light filtering/night light).
+
+omaniri-restart-app hyprsunset

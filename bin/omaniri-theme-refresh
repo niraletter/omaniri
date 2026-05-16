@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# omaniri:summary=Refresh the current theme from its templates.
+
+THEME_NAME_PATH="$HOME/.config/omaniri/current/theme.name"
+
+if [[ -f $THEME_NAME_PATH ]]; then
+  OMANIRI_THEME_SKIP_BACKGROUND=1 omaniri-theme-set "$(cat $THEME_NAME_PATH)"
+fi

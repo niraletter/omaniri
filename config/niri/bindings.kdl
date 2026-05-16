@@ -1,0 +1,15 @@
+binds {
+    // Application launches
+    Mod+Return hotkey-overlay-title="Launch Terminal" { spawn "foot"; }
+    Mod+A hotkey-overlay-title="Alacritty Terminal" { spawn "alacritty"; }
+    Mod+D hotkey-overlay-title="Docker" { spawn "foot" "-e" "lazydocker"; }
+    Mod+Shift+F hotkey-overlay-title="File manager" { spawn "nautilus" "--new-window"; }
+    Mod+B hotkey-overlay-title="Browser" { spawn "google-chrome-stable"; }
+    Mod+Shift+B Browser (private) { spawn "google-chrome-stable" "--private"; }
+    Mod+N hotkey-overlay-title="Text Editor" {spawn "gnome-text-editor" "--new-window"; }
+    Mod+M hotkey-overlay-title="IDE" { spawn "zeditor"; }
+    Mod+Shift+T hotkey-overlay-title="System Monitor" { spawn "foot" "--class" "btop-float" "-e" "btop";}
+
+    //Mod+A { spawn "fuzzel"; }
+    // Mod+Shift+R { spawn "alacritty" "-e" "ssh" "your-server"; }
+}

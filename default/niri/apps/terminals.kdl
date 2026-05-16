@@ -1,0 +1,10 @@
+window-rule {
+    match app-id="Alacritty|kitty|com.mitchellh.ghostty|foot"
+    match is-active=true
+    opacity 0.97
+}
+window-rule {
+    match app-id="Alacritty|kitty|com.mitchellh.ghostty|foot"
+    match is-active=false
+    opacity 0.9
+}

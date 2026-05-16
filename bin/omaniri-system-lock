@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# omaniri:summary=Lock the computer and turn off the display
+# omaniri:group=system
+# omaniri:name=lock
+# omaniri:examples=omaniri system lock
+
+if ! pidof hyprlock >/dev/null; then
+  (
+    hyprlock
+    omaniri-system-wake
+  ) &
+fi
+
+# Ensure 1password is locked
+if pgrep -x "1password" >/dev/null; then
+  1password --lock &
+fi
+
+# Avoid running screensaver when locked
+pkill -f org.omaniri.screensaver
+
+if [[ ${OMANIRI_LOCK_ONLY:-false} != "true" ]]; then
+  (
+    sleep 3
+    pidof hyprlock >/dev/null || exit 0
+    omaniri-brightness-keyboard off
+    omaniri-brightness-display off
+  ) &
+fi

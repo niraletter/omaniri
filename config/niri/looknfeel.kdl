@@ -1,0 +1,39 @@
+
+// Screenshots
+screenshot-path "~/Pictures/%Y-%m-%d %H-%M-%S.png"
+
+layer-rule {
+    match namespace="waybar"
+    opacity 0.99
+}
+
+layout {
+    gaps 2
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        off
+    }
+
+    border {
+        on
+        width 1.5
+    }
+}
+
+// Theme colors (accent borders, overview backdrop = waybar background)
+include "~/.config/omaniri/current/theme/niri.kdl"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+prefer-no-csd

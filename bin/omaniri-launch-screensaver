@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# omaniri:summary=Launch the omaniri screensaver in the default terminal on the system with the correct font configuration.
+
+if ! command -v tte &>/dev/null; then
+  exit 1
+fi
+
+pgrep -f org.omaniri.screensaver && exit 0
+
+if omaniri-toggle-enabled screensaver-off && [[ $1 != "force" ]]; then
+  exit 1
+fi
+
+walker -q
+
+focused=$(omaniri-niri-monitor-focused)
+terminal=$(xdg-terminal-exec --print-id)
+
+launch_on_monitor() {
+  local monitor=$1
+  niri msg action focus-monitor "$monitor" >/dev/null 2>&1
+
+  case $terminal in
+  *Alacritty*)
+    setsid alacritty --class=org.omaniri.screensaver \
+      --config-file ~/.local/share/omaniri/default/alacritty/screensaver.toml \
+      -e omaniri-screensaver &
+    ;;
+  *ghostty*)
+    setsid ghostty --class=org.omaniri.screensaver \
+      --config-file=~/.local/share/omaniri/default/ghostty/screensaver \
+      --font-size=18 \
+      -e omaniri-screensaver &
+    ;;
+  *foot*)
+    setsid foot --app-id=org.omaniri.screensaver \
+      --config="$OMANIRI_PATH/default/foot/screensaver.ini" \
+      -e omaniri-screensaver &
+    ;;
+  *kitty*)
+    setsid kitty --class=org.omaniri.screensaver \
+      --override font_size=18 \
+      --override window_padding_width=0 \
+      -e omaniri-screensaver &
+    ;;
+  *)
+    notify-send -u low "✋  Screensaver only runs in Alacritty, Foot, Ghostty, or Kitty"
+  esac
+}
+
+niri msg -j outputs 2>/dev/null | jq -r '
+  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end | .[].name
+' | while read -r m; do
+  [[ -n $m ]] && launch_on_monitor "$m"
+done
+
+[[ -n $focused ]] && niri msg action focus-monitor "$focused" >/dev/null 2>&1

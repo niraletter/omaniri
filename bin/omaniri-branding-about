@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# omaniri:summary=Edit, set, or reset About branding
+# omaniri:group=branding
+# omaniri:name=about
+# omaniri:args=<image|text|reset>
+# omaniri:examples=omaniri branding about image | omaniri branding about text | omaniri branding about reset
+
+set -euo pipefail
+
+case "${1:-}" in
+image)
+  image=$(omaniri-menu-file "Logo image" "$HOME" "svg png")
+  if [[ -n $image ]] && omaniri-transcode-ascii "$image" ~/.config/omaniri/branding/about.txt --width 54 --height 26 --mode block; then
+    omaniri-launch-about >/dev/null 2>&1
+  fi
+  ;;
+text)
+  omaniri-launch-editor ~/.config/omaniri/branding/about.txt >/dev/null 2>&1 && omaniri-launch-about >/dev/null 2>&1
+  ;;
+reset)
+  cp "$OMANIRI_PATH/icon.txt" ~/.config/omaniri/branding/about.txt && omaniri-launch-about >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: omaniri-branding-about <image|text|reset>" >&2
+  exit 1
+  ;;
+esac

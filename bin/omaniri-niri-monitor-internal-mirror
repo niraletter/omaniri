@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# omaniri:summary=Enable, disable, toggle, or recover mirroring the internal display to an external monitor
+# omaniri:group=niri
+# omaniri:args=<on|off|toggle|recover>
+
+TOGGLE="internal-monitor-mirror"
+TOGGLE_FLAG="$HOME/.local/state/omaniri/toggles/niri/$TOGGLE.kdl"
+DISABLE_TOGGLE="internal-monitor-disable"
+
+INTERNAL=$(niri msg -j outputs 2>/dev/null | jq -r '
+  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+  | .[] | select(.name | test("eDP"; "i")) | .name
+  ' | head -n 1)
+EXTERNAL=$(niri msg -j outputs 2>/dev/null | jq -r '
+  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+  | .[] | select(.name | test("eDP"; "i") | not) | .name
+  ' | head -n 1)
+
+enable() {
+  if [[ -z $EXTERNAL ]]; then
+    notify-send -u low "󰍹    No external monitors found for mirror"
+    exit 1
+  fi
+  if [[ -z $INTERNAL ]]; then
+    notify-send -u low "󰍹    No laptop monitor found to mirror"
+    exit 1
+  fi
+
+  if omaniri-niri-toggle-enabled "$DISABLE_TOGGLE"; then
+    omaniri-niri-toggle "$DISABLE_TOGGLE"
+  fi
+
+  if omaniri-niri-toggle-disabled "$TOGGLE"; then
+    # Niri has no Hypr-style mirror flag; overlap outputs at the internal position.
+    cat >"$TOGGLE_FLAG" <<EOF
+output "$EXTERNAL" {
+    position x=0 y=0
+}
+EOF
+    notify-send -u low "󰍹    Mirroring layout applied ($EXTERNAL) — adjust in ~/.config/niri/monitors.kdl if needed"
+    omaniri-niri-rebuild-toggles
+  fi
+}
+
+disable() {
+  if omaniri-niri-toggle-enabled "$TOGGLE"; then
+    omaniri-niri-toggle --disabled-notification "󰍹    Extended mode restored" "$TOGGLE"
+  fi
+}
+
+recover() {
+  if ! omaniri-hw-external-monitors && omaniri-niri-toggle-enabled "$TOGGLE"; then
+    omaniri-niri-toggle "$TOGGLE"
+  fi
+}
+
+case "$1" in
+  on) enable ;;
+  off) disable ;;
+  toggle) if omaniri-niri-toggle-enabled "$TOGGLE"; then disable; else enable; fi ;;
+  recover) recover ;;
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac
