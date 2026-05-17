@@ -4,8 +4,6 @@
 if [[ -f /etc/sudoers.d/99-omaniri-installer ]]; then
   return 0
 fi
-
-echo "Enable passwordless sudo for this install (you will be prompted once)..."
 sudo tee /etc/sudoers.d/99-omaniri-installer >/dev/null <<EOF
 # omaniri install — removed when install completes
 $USER ALL=(ALL) NOPASSWD: ALL

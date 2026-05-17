@@ -23,11 +23,8 @@ for pkg in "$@"; do
 
   if pkg_in_official_repos "$pkg"; then
     pacman_pkgs+=("$pkg")
-  elif omaniri-cmd-present yay; then
-    aur_pkgs+=("$pkg")
   else
-    echo -e "\033[31mError: Package '$pkg' is not in official repos and yay is not installed\033[0m" >&2
-    exit 1
+    aur_pkgs+=("$pkg")
   fi
 done
 
