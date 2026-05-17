@@ -83,8 +83,8 @@ Use these instead of raw shell commands:
 
 - `omaniri-cmd-missing` / `omaniri-cmd-present` - check for commands
 - `omaniri-pkg-missing` / `omaniri-pkg-present` - check for packages
-- `omaniri-pkg-add` - install official repo packages via pacman
-- `omaniri-pkg-aur-add` - install AUR packages via yay
+- `omaniri-pkg-add` - install packages via pacman when in official repos, otherwise via yay
+- `omaniri-pkg-aur-add` - install AUR packages via yay only
 - `omaniri-hw-asus-rog` - detect ASUS ROG hardware (and similar `hw-*` commands)
 
 Exceptions are allowed for bootstrap, preflight, migration, and package-helper scripts where the helper may not be available yet, where the helper itself is being implemented, or where direct package-manager behavior is required.

@@ -1,16 +1,45 @@
 #!/bin/bash
 
-# omaniri:summary=Install Arch packages if they are missing
+# omaniri:summary=Install packages from official repos or the AUR if they are missing
 # omaniri:args=<packages...>
 # omaniri:examples=omaniri pkg add jq ripgrep
 # omaniri:requires-sudo=true
 
-if omaniri-pkg-missing "$@"; then
-  sudo pacman -S --noconfirm --needed "$@" || exit 1
+if (($# == 0)); then
+  exit 0
+fi
+
+pkg_in_official_repos() {
+  pacman -Si "$1" &>/dev/null
+}
+
+pacman_pkgs=()
+aur_pkgs=()
+
+for pkg in "$@"; do
+  if pacman -Q "$pkg" &>/dev/null; then
+    continue
+  fi
+
+  if pkg_in_official_repos "$pkg"; then
+    pacman_pkgs+=("$pkg")
+  elif omaniri-cmd-present yay; then
+    aur_pkgs+=("$pkg")
+  else
+    echo -e "\033[31mError: Package '$pkg' is not in official repos and yay is not installed\033[0m" >&2
+    exit 1
+  fi
+done
+
+if ((${#pacman_pkgs[@]} > 0)); then
+  sudo pacman -S --noconfirm --needed "${pacman_pkgs[@]}" || exit 1
+fi
+
+if ((${#aur_pkgs[@]} > 0)); then
+  yay -S --noconfirm --needed "${aur_pkgs[@]}" || exit 1
 fi
 
 for pkg in "$@"; do
-  # Secondary check to handle states where pacman doesn't actually register an error
   if ! pacman -Q "$pkg" &>/dev/null; then
     echo -e "\033[31mError: Package '$pkg' did not install\033[0m" >&2
     exit 1
