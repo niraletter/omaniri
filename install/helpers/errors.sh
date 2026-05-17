@@ -8,28 +8,33 @@ show_cursor() {
 
 # Display truncated log lines from the install log
 show_log_tail() {
-  if [[ -f $OMANIRI_INSTALL_LOG_FILE ]]; then
-    local log_lines=$((TERM_HEIGHT - LOGO_HEIGHT - 35))
-    local max_line_width=$((LOGO_WIDTH - 4))
-
-    tail -n $log_lines "$OMANIRI_INSTALL_LOG_FILE" | while IFS= read -r line; do
-      if ((${#line} > max_line_width)); then
-        local truncated_line="${line:0:$max_line_width}..."
-      else
-        local truncated_line="$line"
-      fi
-
-      gum style "$truncated_line"
-    done
-
-    echo
+  if [[ ! -f $OMANIRI_INSTALL_LOG_FILE ]]; then
+    return
   fi
+
+  local log_lines=$((TERM_HEIGHT - LOGO_HEIGHT - 35))
+  local max_line_width=$((LOGO_WIDTH - 4))
+
+  if (( log_lines < 5 )); then
+    log_lines=5
+  elif (( log_lines > 30 )); then
+    log_lines=30
+  fi
+
+  while IFS= read -r line; do
+    if ((${#line} > max_line_width)); then
+      line="${line:0:$max_line_width}..."
+    fi
+    printf '%s%s  → %s\e[0m\n' "$PADDING_LEFT_SPACES" "\e[90m" "$line"
+  done < <(tail -n $log_lines "$OMANIRI_INSTALL_LOG_FILE" 2>/dev/null)
+
+  echo
 }
 
 # Display the failed command or script name
 show_failed_script_or_command() {
   if [[ -n ${CURRENT_SCRIPT:-} ]]; then
-    gum style "Failed script: $CURRENT_SCRIPT"
+    printf '%sFailed script: %s\e[0m\n' "$PADDING_LEFT_SPACES" "$CURRENT_SCRIPT"
   else
     # Truncate long command lines to fit the display
     local cmd="$BASH_COMMAND"
@@ -39,7 +44,7 @@ show_failed_script_or_command() {
       cmd="${cmd:0:$max_cmd_width}..."
     fi
 
-    gum style "$cmd"
+    printf '%s%s\e[0m\n' "$PADDING_LEFT_SPACES" "$cmd"
   fi
 }
 
@@ -74,13 +79,13 @@ catch_errors() {
   clear_logo
   show_cursor
 
-  gum style --foreground 1 --padding "1 0 1 $PADDING_LEFT" "omaniri installation stopped!"
+  printf '\n%s\e[31momaniri installation stopped!\e[0m\n\n' "$PADDING_LEFT_SPACES"
   show_log_tail
 
-  gum style "This command halted with exit code $exit_code:"
+  printf '%sThis command halted with exit code %s:\e[0m\n' "$PADDING_LEFT_SPACES" "$exit_code"
   show_failed_script_or_command
 
-   # Offer options menu
+  # Offer options menu
   while true; do
     options=()
 
@@ -98,7 +103,14 @@ catch_errors() {
     options+=("View full log")
     options+=("Exit")
 
-    choice=$(gum choose "${options[@]}" --header "What would you like to do?" --height 6 --padding "1 $PADDING_LEFT")
+    printf '\n%sWhat would you like to do?\n' "$PADDING_LEFT_SPACES"
+    PS3="${PADDING_LEFT_SPACES}> "
+    choice=
+    select choice in "${options[@]}"; do
+      if [[ -n $choice ]]; then
+        break
+      fi
+    done
 
     case "$choice" in
     "Retry installation")

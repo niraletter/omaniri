@@ -25,7 +25,16 @@ if sudo test -f /etc/sudoers.d/99-omaniri-installer; then
 fi
 
 # Exit gracefully if user chooses not to reboot
-if gum confirm --padding "0 0 0 $((PADDING_LEFT + 32))" --show-help=false --default --affirmative "Reboot Now" --negative "" ""; then
+reboot_prompt="${PADDING_LEFT_SPACES}Reboot now? [Y/n] "
+if [[ -e /dev/tty ]]; then
+  printf '%s' "$reboot_prompt" >/dev/tty
+  read -r reboot_answer </dev/tty
+else
+  printf '%s' "$reboot_prompt"
+  read -r reboot_answer
+fi
+
+if [[ -z $reboot_answer || $reboot_answer =~ ^[Yy] ]]; then
   # Clear screen to hide any shutdown messages
   clear
 

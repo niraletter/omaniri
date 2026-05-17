@@ -1,8 +1,3 @@
-# Ensure we have gum available
-if ! command -v gum &>/dev/null; then
-  bash "$OMANIRI_PATH/bin/omaniri-pkg-add" gum
-fi
-
 # Get terminal size from /dev/tty (works in all scenarios: direct, sourced, or piped)
 if [[ -e /dev/tty ]]; then
   TERM_SIZE=$(stty size 2>/dev/null </dev/tty)
@@ -33,22 +28,8 @@ fi
 export PADDING_LEFT=$(((TERM_WIDTH - LOGO_WIDTH) / 2))
 export PADDING_LEFT_SPACES=$(printf "%*s" $PADDING_LEFT "")
 
-# Tokyo Night theme for gum confirm
-export GUM_CONFIRM_PROMPT_FOREGROUND="6"     # Cyan for prompt
-export GUM_CONFIRM_SELECTED_FOREGROUND="0"   # Black text on selected
-export GUM_CONFIRM_SELECTED_BACKGROUND="2"   # Green background for selected
-export GUM_CONFIRM_UNSELECTED_FOREGROUND="7" # White for unselected
-export GUM_CONFIRM_UNSELECTED_BACKGROUND="0" # Black background for unselected
-export PADDING="0 0 0 $PADDING_LEFT"         # Gum Style
-export GUM_CHOOSE_PADDING="$PADDING"
-export GUM_FILTER_PADDING="$PADDING"
-export GUM_INPUT_PADDING="$PADDING"
-export GUM_SPIN_PADDING="$PADDING"
-export GUM_TABLE_PADDING="$PADDING"
-export GUM_CONFIRM_PADDING="$PADDING"
-
 clear_logo() {
-  local logo_content
+  local logo_content line
 
   printf "\033[H\033[2J" # Clear screen and move cursor to top-left
 
@@ -60,5 +41,8 @@ clear_logo() {
     return
   fi
 
-  gum style --foreground 2 --padding "1 0 0 $PADDING_LEFT" "$logo_content"
+  printf '\n'
+  while IFS= read -r line || [[ -n $line ]]; do
+    printf '%s\e[32m%s\e[0m\n' "$PADDING_LEFT_SPACES" "$line"
+  done <<< "$logo_content"
 }
