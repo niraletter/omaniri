@@ -1,11 +1,10 @@
 // Defaults
 include "~/.local/share/omaniri/default/niri/autostart.kdl"
-include "~/.local/share/omaniri/default/niri/windows.kdl"
-include ="~/.local/share/omaniri/default/niri/bindings/media.kdl"
-include ="~/.local/share/omaniri/default/niri/bindings/clipboard.kdl"
-include ="~/.local/share/omaniri/default/niri/bindings/tiling.kdl"
-include ="~/.local/share/omaniri/default/niri/bindings/utilities.kdl"
-include ="~/.local/state/omaniri/default/niri/toggles.kdl"
+include "~/.local/share/omaniri/default/niri/apps.kdl"
+include "~/.local/share/omaniri/default/niri/bindings/media.kdl"
+include "~/.local/share/omaniri/default/niri/bindings/clipboard.kdl"
+include "~/.local/share/omaniri/default/niri/bindings/tiling.kdl"
+include "~/.local/share/omaniri/default/niri/bindings/utilities.kdl"
 
 // General
 include "monitors.kdl"

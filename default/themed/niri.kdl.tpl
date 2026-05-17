@@ -27,3 +27,12 @@ layout {
 overview {
     backdrop-color "{{ background }}"
 }
+
+recent-windows {
+    highlight {
+        active-color "{{ accent }}"
+        urgent-color "{{ color1 }}"
+        padding 20
+
+    }
+}

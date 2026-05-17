@@ -49,8 +49,8 @@ binds {
   Mod+Ctrl+Alt+R hotkey-overlay-title="Show reminders" { spawn "omaniri-reminder" "show"; }
   Mod+Shift+Ctrl+R hotkey-overlay-title="Clear reminders" { spawn "omaniri-reminder" "clear"; }
 
-  // Waybar-less information
-  Mod+Ctrl+Alt+T hotkey-overlay-title="Show time" { spawn-sh 'notify-send -u low "    $(date +"%A %H:%M  ·  %d %B %Y  ·  Week %V")"'; }
+   // Waybar-less information
+  Mod+Ctrl+Alt+T hotkey-overlay-title="Show time" { spawn-sh "notify-send -u low \"    $(date +\"%A %H:%M  ·  %d %B %Y  ·  Week %V\")\""; }
   Mod+Ctrl+Alt+B hotkey-overlay-title="Show battery remaining" { spawn-sh "notify-send -u low \"$(omaniri-battery-status)\""; }
   Mod+Ctrl+Alt+W hotkey-overlay-title="Show weather" { spawn-sh "notify-send -u low \"$(omaniri-weather-status)\""; }
 

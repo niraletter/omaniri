@@ -40,11 +40,3 @@ omaniri_niri_focused_window_json() {
 omaniri_niri_focused_workspace_id() {
   omaniri_niri_focused_window_json | jq -r '.workspace_id // empty'
 }
-
-omaniri_niri_power_monitors() {
-  local action=$1
-  case $action in
-    off) niri msg action power-off-monitors >/dev/null 2>&1 ;;
-    on) niri msg action power-on-monitors >/dev/null 2>&1 ;;
-  esac
-}

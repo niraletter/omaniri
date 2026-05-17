@@ -96,7 +96,7 @@ binds {
   Mod+F repeat=false hotkey-overlay-title="Maximize column" { maximize-column; }
   Mod+Ctrl+F hotkey-overlay-title="Maximize window to edges" { maximize-window-to-edges; }
   Mod+Alt+F hotkey-overlay-title="Fullscreen window" { fullscreen-window; }
-  Mod+C hotkey-overlay-title="Center column" { center-column; }
+  //Mod+C hotkey-overlay-title="Center column" { center-column; }
   Mod+Ctrl+C hotkey-overlay-title="Center visible columns" { center-visible-columns; }
   Mod+R hotkey-overlay-title="Cycle column width preset back" { switch-preset-column-width-back; }
   Mod+Shift+R hotkey-overlay-title="Cycle window height preset" { switch-preset-window-height; }

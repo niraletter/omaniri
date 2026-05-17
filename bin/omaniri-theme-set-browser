@@ -3,10 +3,14 @@
 # omaniri:summary=Apply the current theme color to Chromium, Chrome, Edge, and Brave
 # omaniri:hidden=true
 
+# Check for generated google.theme first, then fall back to google-chrome.theme
 CHROMIUM_THEME=~/.config/omaniri/current/theme/google-chrome.theme
 
 if [[ -f $CHROMIUM_THEME ]]; then
   THEME_RGB_COLOR=$(<$CHROMIUM_THEME)
+  THEME_HEX_COLOR=$(printf '#%02x%02x%02x' ${THEME_RGB_COLOR//,/ })
+elif [[ -f ~/.config/omaniri/current/theme/google-chrome.theme ]]; then
+  THEME_RGB_COLOR=$(<~/.config/omaniri/current/theme/google-chrome.theme)
   THEME_HEX_COLOR=$(printf '#%02x%02x%02x' ${THEME_RGB_COLOR//,/ })
 else
   # Use a default, neutral grey if theme doesn't have a color
@@ -29,9 +33,6 @@ refresh_running_browser() {
     "$command" --refresh-platform-policy --no-startup-window &>/dev/null
   fi
 }
-
-set_browser_policy /etc/chromium/policies/managed
-refresh_running_browser chromium chromium
 
 set_browser_policy /etc/opt/chrome/policies/managed
 refresh_running_browser chrome google-chrome-stable || refresh_running_browser chrome google-chrome

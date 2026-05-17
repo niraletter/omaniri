@@ -55,19 +55,16 @@ if pgrep -x waybar >/dev/null; then
 fi
 omaniri-restart-swayosd
 omaniri-restart-terminal
-omaniri-restart-hyprctl
 omaniri-restart-btop
 omaniri-restart-opencode
 omaniri-restart-mako
-omaniri-restart-helix
+
 
 # Change app-specific themes
 omaniri-theme-set-foot
 omaniri-theme-set-gnome
 omaniri-theme-set-browser
 omaniri-theme-set-vscode
-omaniri-theme-set-obsidian
-omaniri-theme-set-keyboard
 
 # Call hook on theme set
 omaniri-hook theme-set "$THEME_NAME" >/dev/null

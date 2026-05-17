@@ -24,7 +24,6 @@ run_logged $OMANIRI_INSTALL/config/unmount-fuse.sh
 
 run_logged $OMANIRI_INSTALL/config/input-group.sh
 run_logged $OMANIRI_INSTALL/config/omaniri-ai-skill.sh
-run_logged $OMANIRI_INSTALL/config/pi.sh
 run_logged $OMANIRI_INSTALL/config/omaniri-toggles.sh
 run_logged $OMANIRI_INSTALL/config/kernel-modules-hook.sh
 run_logged $OMANIRI_INSTALL/config/powerprofilesctl-rules.sh

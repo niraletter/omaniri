@@ -90,10 +90,9 @@ tooltip {
   margin-right: 0;
   font-size: 10px;
   padding-bottom: 1px;
-}
-
-#custom-screenrecording-indicator.active {
-  color: #a55555;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
 }
 
 #custom-idle-indicator.active,
@@ -108,4 +107,16 @@ tooltip {
 
 #custom-voxtype.recording {
   color: #a55555;
+}
+
+#custom-screenrecording-indicator.active {
+    color: @foreground;
+    animation-name: blink-recording;
+    animation-duration: 0.7s;
+}
+
+@keyframes blink-recording {
+    to {
+        color: @background;
+    }
 }

@@ -4,6 +4,7 @@ apple_cursor
 cliamp-bin
 yay
 bat
+battop-bin
 bluetui
 bolt
 brightnessctl
@@ -12,10 +13,10 @@ docker-buildx
 docker-compose
 dust
 eza
-#elephant-all-bin
 evince
 expac
 fd
+fzf
 fontconfig
 google-chrome
 github-cli
