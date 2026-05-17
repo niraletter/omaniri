@@ -68,7 +68,7 @@
     "on-click-right": "omaniri-launch-floating-terminal-with-presentation omaniri-tz-select",
   },
   "custom/weather": {
-    "exec": "$OMANIRI_PATH/default/waybar/weather.sh",
+    "exec": "bash ~/.local/share/omaniri/default/waybar/weather.sh",
     "return-type": "json",
     "interval": 60,
     "tooltip": false,
@@ -139,19 +139,19 @@
   },
   "custom/screenrecording-indicator": {
     "on-click": "omaniri-capture-screenrecording",
-    "exec": "$OMANIRI_PATH/default/waybar/indicators/screen-recording.sh",
+    "exec": " bash ~/.local/share/omaniri/default/waybar/indicators/screen-recording.sh",
     "signal": 8,
     "return-type": "json",
   },
   "custom/idle-indicator": {
     "on-click": "omaniri-toggle-idle",
-    "exec": "$OMANIRI_PATH/default/waybar/indicators/idle.sh",
+    "exec": "bash ~/.local/share/omaniri/default/waybar/indicators/idle.sh",
     "signal": 9,
     "return-type": "json",
   },
   "custom/notification-silencing-indicator": {
     "on-click": "omaniri-toggle-notification-silencing",
-    "exec": "$OMANIRI_PATH/default/waybar/indicators/notification-silencing.sh",
+    "exec": "bash ~/.local/share/omaniri/default/waybar/indicators/notification-silencing.sh",
     "signal": 10,
     "return-type": "json",
   },

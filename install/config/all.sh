@@ -38,3 +38,4 @@ run_logged $OMANIRI_INSTALL/config/hardware/ignore-power-button.sh
 
 run_logged $OMANIRI_INSTALL/config/hardware/intel/lpmd.sh
 run_logged $OMANIRI_INSTALL/config/hardware/intel/thermald.sh
+run_logged $OMANIRI_INSTALL/config/zed.sh

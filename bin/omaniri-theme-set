@@ -64,6 +64,7 @@ omaniri-restart-mako
 omaniri-theme-set-foot
 omaniri-theme-set-gnome
 omaniri-theme-set-browser
+omaniri-theme-set-zed
 omaniri-theme-set-vscode
 
 # Call hook on theme set

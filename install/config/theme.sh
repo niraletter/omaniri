@@ -6,8 +6,8 @@ sudo ln -snf /usr/share/icons/Adwaita/symbolic/actions/go-next-symbolic.svg /usr
 mkdir -p ~/.config/omaniri/themes
 
 # Google chrome policy directory for theme
-sudo mkdir -p /etc/google-chrome/policies/managed
-sudo chmod a+rw /etc/google-chrome/policies/managed
+sudo mkdir -p /etc/opt/chrome/policies/managed
+sudo chmod a+rw /etc/opt/chrome/policies/managed
 
 # Set initial theme
 omaniri-theme-set "Tokyo Night"
