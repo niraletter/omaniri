@@ -21,4 +21,4 @@ mkdir -p ~/.config/mako
 ln -snf ~/.config/omaniri/current/theme/mako.ini ~/.config/mako/config
 
 # Default Google chrome to follow system appearance ("device") instead of dark
-echo '{"browser":{"theme":{"color_scheme":0,"color_scheme2":0}}}' | sudo tee /usr/lib/google-chrome/initial_preferences >/dev/null
+echo '{"browser":{"theme":{"color_scheme":0,"color_scheme2":0}}}' | sudo tee /opt/google/chrome/initial_preferences >/dev/null
