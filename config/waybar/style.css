@@ -33,10 +33,14 @@
 #cpu,
 #battery,
 #pulseaudio,
-#custom-omaniri,
 #custom-update {
   min-width: 12px;
   margin: 0 7.5px;
+}
+
+#custom-omaniri {
+    font-size: 14px;
+    margin: 0 7.5px;
 }
 
 #tray {
