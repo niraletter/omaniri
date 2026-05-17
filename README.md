@@ -10,6 +10,11 @@ Omaniri expects **iwd** for networking, not NetworkManager. Set that up in the C
 
 Log in at the console as your user (not root).
 
+**Start `iwd` if it's not running:**
+
+```bash
+sudo systemctl enable --now iwd
+```
 **Wi‑Fi** - interactive:
 
 ```bash
@@ -34,19 +39,53 @@ Replace `<device>` with your wireless interface (often `wlan0`). You will be pro
 iwctl station wlan0 connect "YourSSID"
 ```
 
+
 **Ethernet** - usually works once the cable is plugged in; confirm with:
 
 ```bash
 ping -c 3 1.1.1.1
 ```
 
-Start it if needed:
+### 2. Set up DHCP with systemd-networkd
+
+iwd handles the Wi‑Fi association but not IP assignment. You need `systemd-networkd` to get an IP address via DHCP.
+
+Create a network profile (replace `wlan0` if your interface name differs — check with `ip link`):
 
 ```bash
-sudo systemctl enable --now iwd
+sudo nano /etc/systemd/network/25-wireless.network
 ```
 
-### 2. Install 
+```ini
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=yes
+```
+
+Start the services and fix DNS:
+
+```bash
+sudo systemctl start systemd-networkd
+sudo systemctl start systemd-resolved
+sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+sudo systemctl restart systemd-networkd
+```
+
+Enable them so they start automatically on every boot:
+
+```bash
+sudo systemctl enable systemd-networkd systemd-resolved iwd
+```
+
+Confirm you have internet:
+
+```bash
+ping -c 3 1.1.1.1
+```
+
+### 3. Install
 
 ```bash
 sudo pacman -Syu --needed git
