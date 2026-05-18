@@ -126,7 +126,10 @@ kdl_spawn_command() {
     return
   fi
   if [[ $line =~ spawn[[:space:]]+((\"[^\"]+\"[[:space:]]*)+) ]]; then
-    sed -E 's/"//g; s/[[:space:]]+$//' <<<"${BASH_REMATCH[1]}"
+    local cmd="${BASH_REMATCH[1]}"
+    cmd="${cmd//\"/}"
+    cmd="${cmd%"${cmd##*[![:space:]]}"}"
+    echo "$cmd"
     return
   fi
   if [[ $line =~ \{[[:space:]]*([a-z0-9_-]+) ]]; then
@@ -136,23 +139,25 @@ kdl_spawn_command() {
 
 # Native niri binds { Mod+Key hotkey-overlay-title="…" { spawn "…"; } }
 kdl_style_bindings() {
+  shopt -s extglob
   local line hotkey title cmd mods_key
 
   while IFS= read -r line; do
     [[ $line =~ hotkey-overlay-title=\"([^\"]+)\" ]] || continue
     title="${BASH_REMATCH[1]}"
-    hotkey=$(sed -E 's/^[[:space:]]*//; s/[[:space:]]+hotkey-overlay-title=.*//' <<<"$line")
+
+    hotkey="${line%% hotkey-overlay-title=*}"
+    hotkey="${hotkey##+([[:space:]])}"
     hotkey=${hotkey//allow-when-locked=true/}
     hotkey=${hotkey//repeat=false/}
-    hotkey=$(sed -E 's/[[:space:]]+cooldown-ms=[0-9]+//g' <<<"$hotkey")
-    hotkey=$(sed -E 's/^[[:space:]]+|[[:space:]]+$//g' <<<"$hotkey")
+    if [[ $hotkey == *"cooldown-ms="* ]]; then
+      hotkey="${hotkey% cooldown-ms=*}"
+      hotkey="${hotkey%cooldown-ms=*}"
+    fi
+    hotkey="${hotkey%"${hotkey##*[![:space:]]}"}"
     [[ -z $hotkey ]] && continue
 
     cmd=$(kdl_spawn_command "$line")
-    cmd=$(sed -E \
-      -e 's,~/.local/share/omaniri/bin/,,' \
-      -e 's,~/.local/share/omaniri/default/[^[:space:]]+,,g' \
-      <<<"$cmd")
 
     mods_key=$(kdl_hotkey_to_hypr_mods "$hotkey")
     if [[ -n $cmd ]]; then
@@ -288,6 +293,22 @@ prioritize_entries() {
   cut -f2-
 }
 
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/omaniri"
+CACHE_FILE="$CACHE_DIR/keybindings.txt"
+
+get_newest_config_mtime() {
+  local newest=0 f mtime
+  while IFS= read -r -d '' f; do
+    mtime=$(stat -c '%Y' "$f" 2>/dev/null)
+    (( mtime > newest )) && newest=$mtime
+  done < <(
+    find "$OMANIRI_PATH/default/niri" \
+         "${XDG_CONFIG_HOME:-$HOME/.config}/niri" \
+         -name '*.kdl' -type f -print0 2>/dev/null
+  )
+  echo "$newest"
+}
+
 output_keybindings() {
   build_keymap_cache
 
@@ -301,15 +322,29 @@ output_keybindings() {
     prioritize_entries
 }
 
+cached_output() {
+  local cache_mtime=0 config_mtime
+
+  [[ -f $CACHE_FILE ]] && cache_mtime=$(stat -c '%Y' "$CACHE_FILE" 2>/dev/null) || cache_mtime=0
+  config_mtime=$(get_newest_config_mtime)
+
+  if (( config_mtime > 0 && config_mtime <= cache_mtime )); then
+    cat "$CACHE_FILE"
+    return 0
+  fi
+
+  mkdir -p "$CACHE_DIR"
+  output_keybindings | tee "$CACHE_FILE"
+}
+
 if [[ $1 == "--print" || $1 == "-p" ]]; then
-  output_keybindings
+  cached_output
 else
   monitor_height=$(niri msg -j focused-output 2>/dev/null | jq -r '
     (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical.height // 1080
-    else 1080 end
-  ')
+  ' 2>/dev/null || echo 1080)
   menu_height=$((monitor_height * 40 / 100))
 
-  output_keybindings |
+  cached_output |
     walker --dmenu -p 'Keybindings' --width 800 --height "$menu_height"
 fi
