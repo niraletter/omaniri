@@ -1,6 +1,6 @@
 // Floating utility windows
 window-rule {
-    match app-id="org.omaniri.bluetui|org.omaniri.impala|org.omaniri.wiremix|org.omaniri.btop|org.omaniri.terminal|org.omaniri.bash|org.codeberg.dnkl.foot|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|omaniri|About|TUI.float|imv|mpv"
+    match app-id="org.omaniri.bluetui|org.omaniri.impala|org.omaniri.wiremix|org.omaniri.btop|org.omaniri.terminal|org.omaniri.bash|org.codeberg.dnkl.foot|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|omaniri|About|TUI.float|imv"
     open-floating true
     default-column-width { fixed 875; }
     default-window-height { fixed 600; }

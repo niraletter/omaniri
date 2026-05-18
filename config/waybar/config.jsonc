@@ -7,12 +7,9 @@
   "modules-left": ["custom/omaniri", "niri/workspaces"],
   "modules-center": [
     "clock",
-    "custom/weather",
     "custom/update",
     "custom/voxtype",
     "custom/screenrecording-indicator",
-    "custom/idle-indicator",
-    "custom/notification-silencing-indicator",
   ],
   "modules-right": [
     "group/tray-expander",
@@ -56,23 +53,38 @@
   },
 
   "cpu": {
-    "interval": 5,
-    "format": "󰍛",
+    "interval": 1,
+    "format": "󰍛 {usage}%",
     "on-click": "omaniri-launch-or-focus-tui btop",
     "on-click-right": "alacritty",
   },
+
   "clock": {
-    "format": "{:L%A %H:%M}",
-    "format-alt": "{:L%d %B W%V %Y}",
-    "tooltip": false,
-    "on-click-right": "omaniri-launch-floating-terminal-with-presentation omaniri-tz-select",
-  },
-  "custom/weather": {
-    "exec": "bash ~/.local/share/omaniri/default/waybar/weather.sh",
-    "return-type": "json",
+    "format": "{:%a %I:%M %p}",
+    "format-alt": "󰸗 {:%e-%b %Y}",
     "interval": 60,
-    "tooltip": false,
-    "on-click": "notify-send -u low \"$(omaniri-weather-status)\"",
+    "tooltip": true,
+    "tooltip-format": "{:%Y-%m-%d %A}\n{calendar}",
+
+    "calendar": {
+      "mode": "month",
+      "mode-mon-col": 3,
+      // "weeks-pos": "right",
+      "on-scroll": 1,
+
+      "format": {
+        "months": "{}",
+        "weeks": "W{}",
+        "weekdays": "{}",
+        "today": "<span color='#ffdab3'><b>{}</b></span>",
+      },
+    },
+    "actions": {
+      "on-click-right": "mode",
+      "on-scroll-up": "shift_up",
+      "on-scroll-down": "shift_down",
+      "on-click-middle": "shift_reset",
+    },
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
@@ -141,18 +153,6 @@
     "on-click": "omaniri-capture-screenrecording",
     "exec": " bash ~/.local/share/omaniri/default/waybar/indicators/screen-recording.sh",
     "signal": 8,
-    "return-type": "json",
-  },
-  "custom/idle-indicator": {
-    "on-click": "omaniri-toggle-idle",
-    "exec": "bash ~/.local/share/omaniri/default/waybar/indicators/idle.sh",
-    "signal": 9,
-    "return-type": "json",
-  },
-  "custom/notification-silencing-indicator": {
-    "on-click": "omaniri-toggle-notification-silencing",
-    "exec": "bash ~/.local/share/omaniri/default/waybar/indicators/notification-silencing.sh",
-    "signal": 10,
     "return-type": "json",
   },
   "custom/voxtype": {
