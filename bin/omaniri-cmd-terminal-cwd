@@ -4,7 +4,7 @@
 # omaniri:hidden=true
 
 terminal_pid=$(niri msg -j focused-window 2>/dev/null | jq -r '
-  if .Ok then (.Ok | if type == "object" then . else .[0] end) | .pid // empty
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .pid // empty
   else empty end
 ')
 shell_pid=$(pgrep -P "$terminal_pid" 2>/dev/null | tail -n1)

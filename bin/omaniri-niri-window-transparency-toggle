@@ -4,7 +4,7 @@
 # omaniri:group=niri
 
 WINDOW_ID=$(niri msg -j focused-window 2>/dev/null | jq -r '
-  if .Ok then (.Ok | if type == "object" then . else .[0] end) | .id // empty
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .id // empty
   else empty end
 ')
 

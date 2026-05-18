@@ -50,7 +50,7 @@ launch_on_monitor() {
 }
 
 niri msg -j outputs 2>/dev/null | jq -r '
-  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end | .[].name
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end) | .[].name
 ' | while read -r m; do
   [[ -n $m ]] && launch_on_monitor "$m"
 done

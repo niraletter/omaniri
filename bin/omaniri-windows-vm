@@ -336,7 +336,7 @@ To stop: omaniri-windows-vm stop"
 
   # Detect display scale from Hyprland
   HYPR_SCALE=$(niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical.scale // 1
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical.scale // 1
     else 1 end
   ')
   SCALE_PERCENT=$(echo "$HYPR_SCALE" | awk '{print int($1 * 100)}')

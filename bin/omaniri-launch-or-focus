@@ -12,7 +12,7 @@ WINDOW_PATTERN="$1"
 LAUNCH_COMMAND="${2:-$WINDOW_PATTERN}"
 
 WINDOW_ID=$(niri msg -j windows 2>/dev/null | jq -r --arg p "$WINDOW_PATTERN" '
-  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
   | .[]
   | select(
       ((.app_id // "") | test("\\b" + $p + "\\b"; "i"))

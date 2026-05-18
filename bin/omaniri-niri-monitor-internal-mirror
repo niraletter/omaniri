@@ -9,11 +9,11 @@ TOGGLE_FLAG="$HOME/.local/state/omaniri/toggles/niri/$TOGGLE.kdl"
 DISABLE_TOGGLE="internal-monitor-disable"
 
 INTERNAL=$(niri msg -j outputs 2>/dev/null | jq -r '
-  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
   | .[] | select(.name | test("eDP"; "i")) | .name
   ' | head -n 1)
 EXTERNAL=$(niri msg -j outputs 2>/dev/null | jq -r '
-  if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
   | .[] | select(.name | test("eDP"; "i") | not) | .name
   ' | head -n 1)
 

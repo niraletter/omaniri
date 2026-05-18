@@ -63,7 +63,7 @@ start_webcam_overlay() {
 
   local scale target_width preferred_resolutions video_size_arg available_formats resolution
   scale=$(niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical.scale // 1
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical.scale // 1
     else 1 end
   ')
   target_width=$(awk "BEGIN {printf \"%.0f\", 360 * $scale}")

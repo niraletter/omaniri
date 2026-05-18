@@ -4,7 +4,7 @@
 
 screensaver_in_focus() {
   niri msg -j focused-window 2>/dev/null | jq -e '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .app_id == "org.omaniri.screensaver"
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .app_id == "org.omaniri.screensaver"
     else false end
   ' >/dev/null 2>&1
 }

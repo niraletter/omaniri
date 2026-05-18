@@ -5,7 +5,7 @@
 # omaniri:args=[--reverse]
 
 MONITOR_INFO=$(niri msg -j focused-output 2>/dev/null | jq -c '
-  if .Ok then (.Ok | if type == "object" then . else .[0] end) else empty end
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
 ')
 [[ -z $MONITOR_INFO || $MONITOR_INFO == "null" ]] && exit 0
 

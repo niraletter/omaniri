@@ -12,22 +12,21 @@ omaniri_capture_get_rectangles() {
   omaniri_capture_niri_available || return 1
 
   ws=$(niri msg -j focused-window 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .workspace_id // empty
-    else empty end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .workspace_id // empty
   ')
   read -r out_x out_y < <(niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical | [.x, .y] | @tsv
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical | [.x, .y] | @tsv
     else "0\t0" end
   ')
 
   niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) else empty end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
     | .logical as $l |
     "\($l.x),\($l.y) \($l.width | floor)x\($l.height | floor)"
   '
 
   niri msg -j windows 2>/dev/null | jq -r --argjson ws "${ws:-0}" --argjson ox "${out_x:-0}" --argjson oy "${out_y:-0}" '
-    if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
     | .[] | select(.workspace_id == $ws)
     | .layout.tile_pos_in_workspace_view as $p | .layout.tile_size as $s
     | select($p != null and $s != null)
@@ -90,7 +89,7 @@ omaniri_capture_select_gsr_target() {
   local sw=${BASH_REMATCH[3]} sh=${BASH_REMATCH[4]}
 
   monitor=$(niri msg -j outputs 2>/dev/null | jq -r --argjson x "$sx" --argjson y "$sy" --argjson w "$sw" --argjson h "$sh" '
-    if .Ok then (.Ok | if type == "array" then . else [.] end) else [] end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
     | .[] | select(.logical != null)
     | select(.logical.x == $x and .logical.y == $y and (.logical.width | floor) == $w and (.logical.height | floor) == $h)
     | .name
@@ -108,8 +107,7 @@ omaniri_capture_select_gsr_target() {
 omaniri_capture_focused_monitor_target() {
   local name
   name=$(niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then .name else .[0].name end)
-    else empty end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then .name else .[0].name end)
   ')
   [[ -n $name ]] || return 1
   echo "monitor:$name"
@@ -118,8 +116,7 @@ omaniri_capture_focused_monitor_target() {
 omaniri_capture_default_gsr_resolution() {
   local width height
   read -r width height < <(niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical | "\(.width) \(.height)"
-    else "0 0" end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical | "\(.width) \(.height)"
   ')
   if ((width > 3840 || height > 2160)); then
     echo "3840x2160"

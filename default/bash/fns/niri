@@ -11,29 +11,25 @@ omaniri_niri_reload_config() {
 
 omaniri_niri_focused_output_name() {
   niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then .name else .[0].name end)
-    else empty end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then .name else .[0].name end)
   '
 }
 
 omaniri_niri_outputs_json() {
   niri msg -j outputs 2>/dev/null | jq -c '
-    if .Ok then (.Ok | if type == "array" then . else [.] end)
-    else [] end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
   '
 }
 
 omaniri_niri_windows_json() {
   niri msg -j windows 2>/dev/null | jq -c '
-    if .Ok then (.Ok | if type == "array" then . else [.] end)
-    else [] end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
   '
 }
 
 omaniri_niri_focused_window_json() {
   niri msg -j focused-window 2>/dev/null | jq -c '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end)
-    else empty end
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
   '
 }
 

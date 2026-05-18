@@ -305,7 +305,7 @@ if [[ $1 == "--print" || $1 == "-p" ]]; then
   output_keybindings
 else
   monitor_height=$(niri msg -j focused-output 2>/dev/null | jq -r '
-    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical.height // 1080
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical.height // 1080
     else 1080 end
   ')
   menu_height=$((monitor_height * 40 / 100))

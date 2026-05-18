@@ -10,7 +10,7 @@ x=${3:-}
 y=${4:-}
 
 focused=$(niri msg -j focused-window 2>/dev/null | jq -c '
-  if .Ok then (.Ok | if type == "object" then . else .[0] end) else empty end
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
 ')
 [[ -z $focused || $focused == "null" ]] && exit 0
 
