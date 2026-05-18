@@ -1,5 +1,4 @@
 // Defaults
-include "~/.local/share/omaniri/default/niri/autostart.kdl"
 include "~/.local/share/omaniri/default/niri/apps.kdl"
 include "~/.local/share/omaniri/default/niri/bindings/media.kdl"
 include "~/.local/share/omaniri/default/niri/bindings/clipboard.kdl"
@@ -7,6 +6,7 @@ include "~/.local/share/omaniri/default/niri/bindings/tiling.kdl"
 include "~/.local/share/omaniri/default/niri/bindings/utilities.kdl"
 
 // General
+include "autostart.kdl"
 include "monitors.kdl"
 include "looknfeel.kdl"
 include "input.kdl"
