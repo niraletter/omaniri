@@ -2,6 +2,9 @@
 
 Omaniri is an opinionated setup for CachyOS with niri, configured around my personal workflow and preferences.
 
+> [!WARNING]
+> Do **not** run this blindly on a running setup unless you fully understand what the installer modifies.
+
 ## Setup
 
 Omaniri expects **iwd** for networking, not NetworkManager. Set that up in the CachyOS installer, connect once in the TTY, then run `install.sh`.
