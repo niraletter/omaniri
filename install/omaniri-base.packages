@@ -9,6 +9,7 @@ bluetui
 bolt
 brightnessctl
 docker
+discord
 docker-buildx
 docker-compose
 dust
@@ -63,6 +64,8 @@ mpv
 nautilus
 nautilus-python
 ncdu
+nvtop
+opencode
 pamixer
 playerctl
 polkit-gnome

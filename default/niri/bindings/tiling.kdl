@@ -26,10 +26,10 @@ binds {
   Mod+Ctrl+Right hotkey-overlay-title="Move column right" { move-column-right; }
   Mod+Ctrl+Up hotkey-overlay-title="Move window up" { move-window-up; }
   Mod+Ctrl+Down hotkey-overlay-title="Move window down" { move-window-down; }
-  Mod+Ctrl+H hotkey-overlay-title="Move column left (vim)" { move-column-left; }
-  Mod+Ctrl+J hotkey-overlay-title="Move window down (vim)" { move-window-down; }
-  Mod+Ctrl+K hotkey-overlay-title="Move window up (vim)" { move-window-up; }
-  Mod+Ctrl+L hotkey-overlay-title="Move column right (vim)" { move-column-right; }
+  //Mod+Ctrl+H hotkey-overlay-title="Move column left (vim)" { move-column-left; }
+  //Mod+Ctrl+J hotkey-overlay-title="Move window down (vim)" { move-window-down; }
+  //Mod+Ctrl+K hotkey-overlay-title="Move window up (vim)" { move-window-up; }
+  //Mod+Ctrl+L hotkey-overlay-title="Move column right (vim)" { move-column-right; }
 
   // Workspaces 1–10
   Mod+1 hotkey-overlay-title="Focus workspace 1" { focus-workspace 1; }
