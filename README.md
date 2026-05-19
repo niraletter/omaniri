@@ -6,7 +6,6 @@ Omaniri is an opinionated setup for CachyOS with niri, configured around my pers
 > Do **not** run this blindly on a running setup unless you fully understand what the installer modifies.
 
 ## Setup
-
 Omaniri expects **iwd** for networking, not NetworkManager. Set that up in the CachyOS installer, connect once in the TTY, then run `install.sh`.
 
 ### 1. Connect to the network
@@ -95,6 +94,17 @@ sudo pacman -Syu --needed git
 git clone https://github.com/niraletter/omaniri.git ~/.local/share/omaniri
 cd ~/.local/share/omaniri
 bash install.sh
+```
+
+### 4. Post-Install
+```bash
+# setup elephant providers
+yay -S elephant-bin elephant-symbols-bin elephant-clipboard-bin elephant-files-bin elephant-desktopapplications-bin elephant-providerlist-bin elephant-menus-bin
+elephant service enable
+systemctl --user start elephant.service
+
+# configure firewall and ports
+bash ~/.local/share/omaniri/install/first-run/firewall.sh
 ```
 
 ## License
