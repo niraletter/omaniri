@@ -3,9 +3,6 @@
 # omaniri:summary=Toggles transparency for the currently focused window.
 # omaniri:group=niri
 
-WINDOW_ID=$(niri msg -j focused-window 2>/dev/null | jq -r '
-  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .id // empty
-  else empty end
-')
+WINDOW_ID=$(niri msg -j focused-window 2>/dev/null | jq -r '.id // empty')
 
-[[ -n $WINDOW_ID ]] && niri msg action toggle-window-rule-opacity "$WINDOW_ID" >/dev/null 2>&1
+[[ -n $WINDOW_ID ]] && niri msg action toggle-window-rule-opacity --id "$WINDOW_ID" >/dev/null 2>&1
