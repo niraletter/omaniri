@@ -38,7 +38,7 @@
     },
   },
   "custom/omaniri": {
-    "format": "󰗢",
+    "format": "",
     "on-click": "omaniri-menu",
     "on-click-right": "xdg-terminal-exec",
     "tooltip-format": "omaniri Menu\n\nSuper + Alt + Space",

@@ -119,26 +119,4 @@ System greetd config:
 omaniri-refresh-greetd
 ```
 
-# Migrations
 
-To create a new migration, run `omaniri-dev-add-migration --no-edit`. This creates a migration file named after the unix timestamp of the last commit.
-
-New migration format:
-- File permissions must be `0644` (`-rw-r--r--`); migrations are sourced, not executed directly
-- No shebang line
-- Start with an `echo` describing what the migration does
-- Use `$OMANIRI_PATH` to reference the omaniri directory
-- Prefer helper commands such as `omaniri-cmd-present`, `omaniri-cmd-missing`, `omaniri-pkg-present`, and `omaniri-pkg-missing`
-
-Some older migrations predate these rules. Do not copy older migrations that start with shebangs, omit the leading `echo`, or hard-code `~/.local/share/omaniri`.
-
-Migrations may use raw `pacman`, `command -v`, or direct config edits when needed for historical compatibility or one-off repair work.
-
-Example:
-```bash
-echo "Disable fingerprint in hyprlock if fingerprint auth is not configured"
-
-if omaniri-cmd-missing fprintd-list || ! fprintd-list "$USER" 2>/dev/null | grep -q "finger"; then
-  sed -i 's/fingerprint:enabled = .*/fingerprint:enabled = false/' ~/.config/hypr/hyprlock.conf
-fi
-```

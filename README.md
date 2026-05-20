@@ -15,7 +15,7 @@ In the **Network** group, untick everything except:
 
 - `iwd`
 - `wireless-regdb`
-- `usb_modeswitch` — only if you use a USB 3G/4G dongle
+- `usb_modeswitch` - only if you use a USB 3G/4G dongle
 
 Omaniri uses `iwd` + `systemd-networkd` directly, no NetworkManager.
 
