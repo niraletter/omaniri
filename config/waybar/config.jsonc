@@ -120,7 +120,7 @@
   "memory": {
     "format": "{used:0.1f}G",
     "interval": 3,
-    "on-click": "omarchy-launch-or-focus-tui btop",
+    "on-click": "omaniri-launch-or-focus-tui btop",
     "on-click-right": "alacritty",
     "tooltip-format": "RAM: {used:0.1f}G / {total:0.1f}G ({percentage}%)\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G ({swapPercentage}%)",
   },
