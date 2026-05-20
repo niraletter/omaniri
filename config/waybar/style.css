@@ -91,6 +91,7 @@ tooltip {
 }
 
 #custom-screenrecording-indicator,
+#custom-voxtype,
 #custom-idle-indicator,
 #custom-notification-silencing-indicator {
     min-width: 12px;
@@ -109,12 +110,21 @@ tooltip {
 }
 
 #custom-voxtype {
+    font-size: 12px;
     min-width: 12px;
     margin: 0 0 0 7.5px;
+    animation-name: voxtype-recording;
+    animation-duration: 0.5s;
+}
+
+@keyframes voxtype-recording {
+    to {
+        color: @background;
+    }
 }
 
 #custom-voxtype.recording {
-    color: #a55555;
+    color: @foreground;
 }
 
 #custom-screenrecording-indicator.active {
