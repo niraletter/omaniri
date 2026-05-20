@@ -320,6 +320,7 @@ show_background_menu() {
   omaniri-launch-walker -m menus:omaniriBackgroundSelector --width 800 --minheight 400
 }
 
+
 show_font_menu() {
   theme=$(menu "Font" "$(omaniri-font-list)" "--width 350" "$(omaniri-font-current)")
   if [[ $theme == "CNCLD" || -z $theme ]]; then
@@ -330,7 +331,7 @@ show_font_menu() {
 }
 
 show_setup_menu() {
-  local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n  System Sleep\n󰍹  Monitors"
+  local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n󰂁  Battery\n  System Sleep\n󰍹  Monitors"
   [[ -f ~/.config/niri/bindings.kdl ]] && options="$options\n  Keybindings"
   [[ -f ~/.config/niri/input.kdl ]] && options="$options\n  Input"
   options="$options\n  Defaults\n󰱔  DNS\n  Security\n  Config"
@@ -340,6 +341,7 @@ show_setup_menu() {
   *Wifi*) omaniri-launch-wifi ;;
   *Bluetooth*) omaniri-launch-bluetooth ;;
   *Power*) show_setup_power_menu ;;
+  *Battery*) show_battery_menu ;;
   *System*) show_setup_system_menu ;;
   *Monitors*) open_in_editor ~/.config/niri/monitors.kdl ;;
   *Keybindings*) open_in_editor ~/.config/niri/bindings.kdl ;;
@@ -360,6 +362,14 @@ show_setup_power_menu() {
   else
     powerprofilesctl set "$profile"
   fi
+}
+
+show_battery_menu() {
+  case $(menu "Charging Threshold" "󱈏  Limit Charging (80%)\n󰁹  Full Charging (100%)") in
+  *"Limit"*) asusctl battery limit 80 ;;
+  *"Full"*)  asusctl battery oneshot ;;
+  *) back_to show_setup_menu ;;
+  esac
 }
 
 show_setup_security_menu() {
@@ -885,6 +895,7 @@ go_to_menu() {
   *style*) show_style_menu ;;
   *theme*) show_theme_menu ;;
   *screenrecord*) show_screenrecord_menu ;;
+  *battery*) show_battery_menu ;;
   *setup*) show_setup_menu ;;
   *power*) show_setup_power_menu ;;
   *install*) show_install_menu ;;

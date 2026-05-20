@@ -7,16 +7,17 @@
   "modules-left": ["custom/omaniri", "niri/workspaces"],
   "modules-center": [
     "clock",
-    "custom/update",
     "custom/voxtype",
     "custom/screenrecording-indicator",
   ],
   "modules-right": [
     "group/tray-expander",
+    "custom/screenshot",
     "bluetooth",
     "network",
     "pulseaudio",
     "cpu",
+    "memory",
     "battery",
   ],
   "niri/workspaces": {
@@ -34,7 +35,7 @@
       "8": "8",
       "9": "9",
       "10": "0",
-      "active": "󱓻",
+      "active": "<span font='claude'>\ue902</span>",
     },
   },
   "custom/omaniri": {
@@ -43,18 +44,15 @@
     "on-click-right": "xdg-terminal-exec",
     "tooltip-format": "omaniri Menu\n\nSuper + Alt + Space",
   },
-  "custom/update": {
-    "format": "",
-    "exec": "omaniri-update-available",
-    "on-click": "omaniri-launch-floating-terminal-with-presentation system-update",
-    "tooltip-format": "Update available - New CachyOS release",
-    "signal": 7,
-    "interval": 21600,
-  },
 
+  "custom/screenshot": {
+    "format": "",
+    "tooltip-format": "Screenshot",
+    "on-click": "omaniri-capture-screenshot",
+  },
   "cpu": {
-    "interval": 1,
-    "format": "󰍛 {usage}%",
+    "interval": 5,
+    "format": "󰍛",
     "on-click": "omaniri-launch-or-focus-tui btop",
     "on-click-right": "alacritty",
   },
@@ -100,7 +98,7 @@
     "on-click": "omaniri-launch-wifi",
   },
   "battery": {
-    "format": "{capacity}% {icon}",
+    "format": "󱈏",
     "format-discharging": "{icon}",
     "format-charging": "{icon}",
     "format-plugged": "",
@@ -113,12 +111,20 @@
     "tooltip-format-charging": "{power:>1.0f}W↑ {capacity}%",
     "interval": 5,
     "on-click": "omaniri-menu power",
-    "on-click-right": "notify-send -u low \"$(omaniri-battery-status)\"",
+    "on-click-right": "omaniri-menu battery",
     "states": {
       "warning": 20,
       "critical": 10,
     },
   },
+  "memory": {
+    "format": " {used:0.1f}G",
+    "interval": 3,
+    "on-click": "omarchy-launch-or-focus-tui btop",
+    "on-click-right": "alacritty",
+    "tooltip-format": "RAM: {used:0.1f}G / {total:0.1f}G ({percentage}%)\nSwap: {swapUsed:0.1f}G / {swapTotal:0.1f}G ({swapPercentage}%)",
+  },
+
   "bluetooth": {
     "format": "",
     "format-off": "󰂲",
