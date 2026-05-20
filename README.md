@@ -5,6 +5,30 @@ Omaniri is an opinionated setup for CachyOS with niri, configured around my pers
 > [!WARNING]
 > Do **not** run this blindly on a running setup unless you fully understand what the installer modifies.
 
+## Prerequisites
+
+Before running the CachyOS installer, trim the default package selection to avoid conflicts with what Omaniri manages itself.
+
+### Network packages
+
+In the **Network** group, untick everything except:
+
+- `iwd`
+- `wireless-regdb`
+- `usb_modeswitch` — only if you use a USB 3G/4G dongle
+
+Omaniri uses `iwd` + `systemd-networkd` directly, no NetworkManager.
+
+### Other packages to untick
+
+In **CachyOS shell configuration**: `cachyos-fish-config`, `cachyos-zsh-config`
+
+In **Power**: `cpupower`
+
+In **Desktop integration**: `yaru`
+
+Omaniri handles these itself with its own configuration.
+
 ## Setup
 Omaniri expects **iwd** for networking, not NetworkManager. Set that up in the CachyOS installer, connect once in the TTY, then run `install.sh`.
 
