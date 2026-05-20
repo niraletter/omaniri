@@ -25,7 +25,7 @@ In **CachyOS shell configuration**: `cachyos-fish-config`, `cachyos-zsh-config`
 
 In **Power**: `cpupower`
 
-In **Desktop integration**: `yaru`
+In **Packages management**: `paru`
 
 Omaniri handles these itself with its own configuration.
 
