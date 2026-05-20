@@ -63,10 +63,10 @@ start_webcam_overlay() {
 
   local scale target_width preferred_resolutions video_size_arg available_formats resolution
   scale=$(niri msg -j focused-output 2>/dev/null | jq -r '
-    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .logical.scale // 1
+    if .Ok then (.Ok | if type == "object" then . else .[0] end) | .logical.scale // 1
     else 1 end
   ')
-  target_width=$(awk "BEGIN {printf \"%.0f\", 360 * $scale}")
+  target_width=$(awk "BEGIN {printf \"%.0f\", 450 * $scale}")
 
   preferred_resolutions=("640x360" "1280x720" "1920x1080")
   video_size_arg=""
@@ -80,7 +80,7 @@ start_webcam_overlay() {
   done
 
   ffplay -f v4l2 $video_size_arg -framerate 30 "$WEBCAM_DEVICE" \
-    -vf "crop=iw/2:ih,scale=${target_width}:-1" \
+    -vf "crop=iw/2:ih,scale=${target_width}:-1,hflip" \
     -window_title "WebcamOverlay" \
     -noborder \
     -fflags nobuffer -flags low_delay \
@@ -161,7 +161,7 @@ start_screenrecording() {
     toggle_screenrecording_indicator
   else
     cleanup_webcam
-    notify-send "Screen recording failed" "gpu-screen-recorder exited immediately. Set OMANIRI_SCREENRECORD_DEBUG=true and check /tmp/omaniri-screenrecord.log" -u critical -t 8000
+    notify-send "Screen recording canceled" -u normal -t 2000
     return 1
   fi
 }

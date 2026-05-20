@@ -7,6 +7,13 @@ window-rule {
 }
 
 window-rule {
+    match app-id="mpv"
+    open-floating true
+    default-column-width { fixed 1600; }
+    default-window-height { fixed 1200; }
+}
+
+window-rule {
     match app-id="xdg-desktop-portal-gtk|sublime_text|DesktopEditors|org.gnome.Nautilus"
     match title="^(Open.*Files?|Open [Ff]older.*|Save.*Files?|Save.*As|Save|All Files|.*wants to [open|save].*|[Cc]hoose.*)"
     open-floating true
