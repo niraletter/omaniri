@@ -66,6 +66,7 @@ nautilus-python
 ncdu
 nvtop
 opencode
+perl-file-mimeinfo
 pamixer
 playerctl
 polkit-gnome
