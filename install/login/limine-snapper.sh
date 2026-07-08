@@ -53,7 +53,7 @@ EOF
   # We overwrite the whole thing knowing the limine-update will add the entries for us
   sudo cp $OMANIRI_PATH/default/limine/limine.conf /boot/limine.conf
 
-  omaniri-pkg-add --noconfirm --needed limine-snapper-sync limine-mkinitcpio-hook
+  omaniri-pkg-add limine-snapper-sync limine-mkinitcpio-hook
 
   # Only snapshot root — /home is user data; rolling it back loses user work
   if ! sudo snapper list-configs 2>/dev/null | grep -q "root"; then
