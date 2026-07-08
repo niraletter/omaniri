@@ -6,7 +6,7 @@ if [[ -n ${OMANIRI_ONLINE_INSTALL:-} ]]; then
   sudo cp -f ~/.local/share/omaniri/default/pacman/pacman.conf /etc/pacman.conf
   
   sudo pacman -Sy
-  omarchy-pkg-add archlinux-keyring
+  omaniri-pkg-add archlinux-keyring
 
   # Refresh all repos
   sudo pacman -Syyuu --noconfirm
