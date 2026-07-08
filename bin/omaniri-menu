@@ -1,0 +1,922 @@
+#!/bin/bash
+
+# omaniri:summary=Launch the omaniri Menu or takes a parameter to jump straight to a submenu.
+
+# Set to true when going directly to a submenu, so we can exit directly
+BACK_TO_EXIT=false
+
+back_to() {
+  local parent_menu="$1"
+
+  if [[ $BACK_TO_EXIT == "true" ]]; then
+    exit 0
+  elif [[ -n $parent_menu ]]; then
+    "$parent_menu"
+  else
+    show_main_menu
+  fi
+}
+
+toggle_existing_menu() {
+  if pgrep -f "walker.*--dmenu" >/dev/null; then
+    walker --close >/dev/null 2>&1
+    exit 0
+  fi
+}
+
+menu() {
+  local prompt="$1"
+  local options="$2"
+  local extra="$3"
+  local preselect="$4"
+
+  read -r -a args <<<"$extra"
+
+  if [[ -n $preselect ]]; then
+    local index
+    index=$(echo -e "$options" | grep -nxF "$preselect" | cut -d: -f1)
+    if [[ -n $index ]]; then
+      args+=("-c" "$index")
+    fi
+  fi
+
+  echo -e "$options" | omaniri-launch-walker --dmenu --width 295 --minheight 1 --maxheight 630 -p "$prompt…" "${args[@]}" 2>/dev/null
+}
+
+terminal() {
+  xdg-terminal-exec --app-id=org.omaniri.terminal "$@"
+}
+
+present_terminal() {
+  omaniri-launch-floating-terminal-with-presentation $1
+}
+
+open_in_editor() {
+  notify-send -u low "Editing config file" "$1"
+  omaniri-launch-editor "$1"
+}
+
+install() {
+  present_terminal "echo 'Installing $1...'; omaniri-pkg-add $2"
+}
+
+install_and_launch() {
+  present_terminal "echo 'Installing $1...'; omaniri-pkg-add $2 && setsid gtk-launch $3"
+}
+
+install_font() {
+  present_terminal "echo 'Installing $1...'; omaniri-pkg-add $2 && sleep 2 && omaniri-font-set '$3'"
+}
+
+install_terminal() {
+  present_terminal "omaniri-install-terminal $1"
+}
+
+aur_install() {
+  present_terminal "echo 'Installing $1 from AUR...'; omaniri-pkg-aur-add $2"
+}
+
+aur_install_and_launch() {
+  present_terminal "echo 'Installing $1 from AUR...'; omaniri-pkg-aur-add $2 && setsid gtk-launch $3"
+}
+
+show_learn_menu() {
+  case $(menu "Learn" "  Keybindings\n\ue903 Omaniri\n Niri\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
+  *Keybindings*) omaniri-menu-keybindings ;;
+  *omaniri*) omaniri-launch-webapp "https://github.com/niraletter/omaniri" ;;
+  *Niri*) omaniri-launch-webapp "https://niri-wm.github.io/niri/" ;;
+  *Arch*) omaniri-launch-webapp "https://wiki.archlinux.org/title/Main_page" ;;
+  *Bash*) omaniri-launch-webapp "https://devhints.io/bash" ;;
+  *Neovim*) omaniri-launch-webapp "https://www.lazyvim.org/keymaps" ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_trigger_menu() {
+  case $(menu "Trigger" "󰔛  Reminder\n  Capture\n󰧸  Transcode\n  Share\n󰔎  Toggle\n  Hardware") in
+  *Reminder*) show_reminder_menu ;;
+  *Capture*) show_capture_menu ;;
+  *Transcode*) omaniri-transcode || back_to show_trigger_menu ;;
+  *Share*) show_share_menu ;;
+  *Toggle*) show_toggle_menu ;;
+  *Hardware*) show_hardware_menu ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_reminder_menu() {
+  case $(menu "Reminder" "󰔛  Set one\n󰔛  Show all\n󰔛  Clear all") in
+  *Set*) show_custom_reminder_input ;;
+  *"Show all"*) omaniri-reminder show ;;
+  *"Clear all"*) omaniri-reminder clear ;;
+  *) back_to show_trigger_menu ;;
+  esac
+}
+
+show_custom_reminder_input() {
+  local minutes
+  minutes=$(omaniri-menu-input "Remind in minutes")
+
+  if [[ $minutes =~ ^[0-9]+$ ]] && ((minutes > 0)); then
+    show_reminder_message_input "$minutes"
+  elif [[ -n $minutes ]]; then
+    omaniri-notification-send "󰔛" "Invalid reminder" "Enter the number of minutes" -u critical
+    show_custom_reminder_input
+  else
+    back_to show_reminder_menu
+  fi
+}
+
+show_reminder_message_input() {
+  local minutes="$1"
+  local message
+  message=$(omaniri-menu-input "Reminder message")
+
+  if [[ -n $message ]]; then
+    omaniri-reminder "$minutes" "$message"
+  else
+    omaniri-reminder "$minutes"
+  fi
+}
+
+show_capture_menu() {
+  case $(menu "Capture" "  Screenshot\n  Screenrecord\n󰴑  Text Extraction\n󰃉  Color") in
+  *Screenshot*) omaniri-capture-screenshot ;;
+  *Screenrecord*) show_screenrecord_menu ;;
+  *Text*) omaniri-capture-text-extraction ;;
+  *Color*) pkill hyprpicker || hyprpicker -a ;;
+  *) back_to show_trigger_menu ;;
+  esac
+}
+
+get_webcam_list() {
+  v4l2-ctl --list-devices 2>/dev/null | while IFS= read -r line; do
+    if [[ $line != $'\t'* && -n $line ]]; then
+      local name="$line"
+      IFS= read -r device || break
+      device=$(echo "$device" | tr -d '\t' | head -1)
+      [[ -n $device ]] && echo "$device  $name"
+    fi
+  done
+}
+
+show_webcam_select_menu() {
+  local devices=$(get_webcam_list)
+  local count=$(echo "$devices" | grep -c . 2>/dev/null || echo 0)
+
+  if [[ -z $devices ]] || ((count == 0)); then
+    notify-send "No webcam devices found" -u critical -t 3000
+    return 1
+  fi
+
+  if ((count == 1)); then
+    echo "$devices" | awk '{print $1}'
+  else
+    menu "Select Webcam" "$devices" | awk '{print $1}'
+  fi
+}
+
+show_screenrecord_menu() {
+  omaniri-capture-screenrecording --stop-recording && exit 0
+
+case $(menu "Screenrecord" "\
+󰻃  Screen\n\
+󰻃  Screen · audio\n\
+󰻃  Screen · mic + cam\n\
+󰩭  Region\n\
+󰩭  Region · audio\n\
+󰩭  Region · mic + cam") in
+
+  *"Screen · mic + cam")
+    local device=$(show_webcam_select_menu) || {
+      back_to show_capture_menu
+      return
+    }
+    omaniri-capture-screenrecording --portal --with-desktop-audio --with-microphone-audio --with-webcam --webcam-device="$device"
+    ;;
+
+  *"Screen · audio")
+    omaniri-capture-screenrecording --portal --with-desktop-audio
+    ;;
+
+  *"Screen")
+    omaniri-capture-screenrecording --portal
+    ;;
+
+  *"Region · mic + cam")
+    local device=$(show_webcam_select_menu) || {
+      back_to show_capture_menu
+      return
+    }
+    omaniri-capture-screenrecording --with-desktop-audio --with-microphone-audio --with-webcam --webcam-device="$device"
+    ;;
+
+  *"Region · audio")
+    omaniri-capture-screenrecording --with-desktop-audio
+    ;;
+
+  *"Region")
+    omaniri-capture-screenrecording
+    ;;
+
+  *)
+    back_to show_capture_menu
+    ;;
+esac
+}
+
+show_share_menu() {
+  case $(menu "Share" "  Clipboard\n  File \n  Folder") in
+  *Clipboard*) omaniri-menu-share clipboard ;;
+  *File*) terminal bash -c "omaniri-menu-share file" ;;
+  *Folder*) terminal bash -c "omaniri-menu-share folder" ;;
+  *) back_to show_trigger_menu ;;
+  esac
+}
+
+show_toggle_menu() {
+  local options="󱄄  Screensaver\n󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n󰍜  Top Bar\n󱂬  Workspace Layout\n  Window Gaps\n  1-Window Ratio\n󰍹  Monitor Scaling\n  Direct Boot\n󰟵  Passwordless Sudo"
+
+  case $(menu "Toggle" "$options") in
+  *Screensaver*) omaniri-toggle-screensaver ;;
+  *Nightlight*) omaniri-toggle-nightlight ;;
+  *Idle*) omaniri-toggle-idle ;;
+  *Notifications*) omaniri-toggle-notification-silencing ;;
+  *Bar*) omaniri-toggle-waybar ;;
+  *Layout*) omaniri-niri-workspace-layout-toggle ;;
+  *Ratio*) omaniri-niri-window-single-square-aspect-toggle ;;
+  *Gaps*) omaniri-niri-window-gaps-toggle ;;
+  *Scaling*) omaniri-niri-monitor-scaling-cycle ;;
+  *"Direct Boot"*) present_terminal omaniri-config-direct-boot ;;
+  *"Passwordless Sudo"*) present_terminal omaniri-sudo-passwordless ;;
+  *) back_to show_trigger_menu ;;
+  esac
+}
+
+show_hardware_menu() {
+  local options="󰛧  Laptop Display\n 󰍹  Mirror Display"
+
+  if omaniri-hw-hybrid-gpu; then
+    options="$options\n  Hybrid GPU"
+  fi
+
+  if omaniri-hw-touchpad; then
+    options="$options\n󰟸  Touchpad"
+  fi
+
+  if omaniri-hw-dell-xps-haptic-touchpad && omaniri-cmd-present dell-xps-touchpad-haptics; then
+    options="$options\n󰌌  Touchpad Haptics"
+  fi
+
+  if omaniri-hw-touchscreen; then
+    options="$options\n󰆽  Touchscreen"
+  fi
+
+  case $(menu "Toggle" "$options") in
+  *Laptop*) omaniri-niri-monitor-internal toggle ;;
+  *Mirror*) omaniri-niri-monitor-internal-mirror toggle ;;
+  *Haptics*) show_hardware_touchpad_haptics_menu ;;
+  *Touchpad*) omaniri-toggle-touchpad ;;
+  *Touchscreen*) omaniri-toggle-touchscreen ;;
+  *"Hybrid GPU"*) present_terminal omaniri-toggle-hybrid-gpu ;;
+  *) back_to show_trigger_menu ;;
+  esac
+}
+
+show_hardware_touchpad_haptics_menu() {
+  local current=$(dell-xps-touchpad-haptics get)
+  local selected=$(menu "Touchpad Haptics" "low\nmid\nhigh" "" "$current")
+
+  if [[ -n $selected ]]; then
+    dell-xps-touchpad-haptics set "$selected"
+  else
+    back_to show_hardware_menu
+  fi
+}
+
+show_style_menu() {
+  case $(menu "Style" "󰸌  Theme\n󰟵  Unlock\n  Font\n  Background\n󰨳  Niri\n󱄄  Screensaver\n  About") in
+  *Theme*) show_theme_menu ;;
+  *Unlock*) omaniri-launch-walker -m menus:omaniriunlocks --width 800 --minheight 400 ;;
+  *Font*) show_font_menu ;;
+  *Background*) show_background_menu ;;
+  *Niri*) open_in_editor ~/.config/niri/looknfeel.kdl ;;
+  *Screensaver*) show_screensaver_menu ;;
+  *About*) show_about_menu ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_about_menu() {
+  case $(menu "About" "  Edit Text\n  Set From Image\n  Restore Default") in
+  *Text*) omaniri-branding-about text ;;
+  *Image*) omaniri-branding-about image ;;
+  *Default*) omaniri-branding-about reset ;;
+  *) show_style_menu ;;
+  esac
+}
+
+show_screensaver_menu() {
+  case $(menu "Screensaver" "  Edit Text\n  Set From Image\n  Restore Default") in
+  *Text*) omaniri-branding-screensaver text ;;
+  *Image*) omaniri-branding-screensaver image ;;
+  *Default*) omaniri-branding-screensaver reset ;;
+  *) show_style_menu ;;
+  esac
+}
+
+show_theme_menu() {
+  omaniri-launch-walker -m menus:omanirithemes --width 800 --minheight 400
+}
+
+show_background_menu() {
+  omaniri-launch-walker -m menus:omaniriBackgroundSelector --width 800 --minheight 400
+}
+
+
+show_font_menu() {
+  theme=$(menu "Font" "$(omaniri-font-list)" "--width 350" "$(omaniri-font-current)")
+  if [[ $theme == "CNCLD" || -z $theme ]]; then
+    back_to show_style_menu
+  else
+    omaniri-font-set "$theme"
+  fi
+}
+
+show_setup_menu() {
+  local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n󰂁  Battery\n  System Sleep\n󰍹  Monitors"
+  [[ -f ~/.config/niri/bindings.kdl ]] && options="$options\n  Keybindings"
+  [[ -f ~/.config/niri/input.kdl ]] && options="$options\n  Input"
+  options="$options\n  Defaults\n󰱔  DNS\n  Security\n  Config"
+
+  case $(menu "Setup" "$options") in
+  *Audio*) omaniri-launch-audio ;;
+  *Wifi*) omaniri-launch-wifi ;;
+  *Bluetooth*) omaniri-launch-bluetooth ;;
+  *Power*) show_setup_power_menu ;;
+  *Battery*) show_battery_menu ;;
+  *System*) show_setup_system_menu ;;
+  *Monitors*) open_in_editor ~/.config/niri/monitors.kdl ;;
+  *Keybindings*) open_in_editor ~/.config/niri/bindings.kdl ;;
+  *Input*) open_in_editor ~/.config/niri/input.kdl ;;
+  *Defaults*) show_setup_default_menu ;;
+  *DNS*) present_terminal omaniri-setup-dns ;;
+  *Security*) show_setup_security_menu ;;
+  *Config*) show_setup_config_menu ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_setup_power_menu() {
+  profile=$(menu "Power Profile" "$(omaniri-powerprofiles-list)" "" "$(powerprofilesctl get)")
+
+  if [[ $profile == "CNCLD" || -z $profile ]]; then
+    back_to show_setup_menu
+  else
+    powerprofilesctl set "$profile"
+  fi
+}
+
+show_battery_menu() {
+  case $(menu "Charging Threshold" "󱈏  Limit Charging (80%)\n󰁹  Full Charging (100%)") in
+  *"Limit"*) asusctl battery limit 80 ;;
+  *"Full"*)  asusctl battery oneshot ;;
+  *) back_to show_setup_menu ;;
+  esac
+}
+
+show_setup_security_menu() {
+  case $(menu "Setup" "󰈷  Fingerprint\n  Fido2") in
+  *Fingerprint*) present_terminal omaniri-setup-security-fingerprint ;;
+  *Fido2*) present_terminal omaniri-setup-security-fido2 ;;
+  *) show_setup_menu ;;
+  esac
+}
+
+show_setup_default_menu() {
+  case $(menu "Default" "  Browser\n  Terminal\n  Editor") in
+  *Browser*) show_setup_default_browser_menu ;;
+  *Terminal*) show_setup_default_terminal_menu ;;
+  *Editor*) show_setup_default_editor_menu ;;
+  *) show_setup_menu ;;
+  esac
+}
+
+browser_desktop_exists() {
+  [[ -f ~/.local/share/applications/$1 || -f ~/.nix-profile/share/applications/$1 || -f /usr/share/applications/$1 ]]
+}
+
+show_setup_default_browser_menu() {
+  local options=""
+  browser_desktop_exists chromium.desktop && options="$options  Chromium"
+  browser_desktop_exists google-chrome.desktop && options="${options:+$options\n}󰊯  Chrome"
+  browser_desktop_exists brave-browser.desktop && options="${options:+$options\n}󰖟  Brave"
+  browser_desktop_exists brave-origin-beta.desktop && options="${options:+$options\n}󰖟  Brave Origin"
+  browser_desktop_exists microsoft-edge.desktop && options="${options:+$options\n}󰇩  Edge"
+  browser_desktop_exists firefox.desktop && options="${options:+$options\n}󰈹  Firefox"
+  browser_desktop_exists zen.desktop && options="${options:+$options\n}󰖟  Zen"
+
+  local current=""
+  case "$(omaniri-default-browser)" in
+  chromium) current="  Chromium" ;;
+  chrome) current="󰊯  Chrome" ;;
+  brave) current="󰖟  Brave" ;;
+  brave-origin) current="󰖟  Brave Origin" ;;
+  edge) current="󰇩  Edge" ;;
+  firefox) current="󰈹  Firefox" ;;
+  zen) current="󰖟  Zen" ;;
+  esac
+
+  case $(menu "Default Browser" "$options" "" "$current") in
+  *Chromium*) omaniri-default-browser chromium ;;
+  *Chrome*) omaniri-default-browser chrome ;;
+  *"Brave Origin"*) omaniri-default-browser brave-origin ;;
+  *Brave*) omaniri-default-browser brave ;;
+  *Edge*) omaniri-default-browser edge ;;
+  *Firefox*) omaniri-default-browser firefox ;;
+  *Zen*) omaniri-default-browser zen ;;
+  *) show_setup_default_menu ;;
+  esac
+}
+
+show_setup_default_terminal_menu() {
+  local options=""
+  omaniri-cmd-present alacritty && options="$options  Alacritty"
+  omaniri-cmd-present foot && options="${options:+$options\n}  Foot"
+  omaniri-cmd-present ghostty && options="${options:+$options\n}  Ghostty"
+  omaniri-cmd-present kitty && options="${options:+$options\n}  Kitty"
+
+  local current=""
+  case "$(omaniri-default-terminal)" in
+  alacritty) current="  Alacritty" ;;
+  foot) current="  Foot" ;;
+  ghostty) current="  Ghostty" ;;
+  kitty) current="  Kitty" ;;
+  esac
+
+  case $(menu "Default Terminal" "$options" "" "$current") in
+  *Alacritty*) omaniri-default-terminal alacritty ;;
+  *Foot*) omaniri-default-terminal foot ;;
+  *Ghostty*) omaniri-default-terminal ghostty ;;
+  *Kitty*) omaniri-default-terminal kitty ;;
+  *) show_setup_default_menu ;;
+  esac
+}
+
+show_setup_default_editor_menu() {
+  local options=""
+  omaniri-cmd-present nvim && options="$options  Neovim"
+  omaniri-cmd-present code && options="${options:+$options\n}  VSCode"
+  omaniri-cmd-present cursor && options="${options:+$options\n}  Cursor"
+  omaniri-cmd-present zeditor && options="${options:+$options\n}  Zed"
+  omaniri-cmd-present sublime_text && options="${options:+$options\n}  Sublime Text"
+  omaniri-cmd-present helix && options="${options:+$options\n}  Helix"
+  omaniri-cmd-present vim && options="${options:+$options\n}  Vim"
+  omaniri-cmd-present emacs && options="${options:+$options\n}  Emacs"
+
+  local current=""
+  case "$(omaniri-default-editor)" in
+  nvim) current="  Neovim" ;;
+  code) current="  VSCode" ;;
+  cursor) current="  Cursor" ;;
+  zed | zeditor) current="  Zed" ;;
+  sublime_text) current="  Sublime Text" ;;
+  helix) current="  Helix" ;;
+  vim) current="  Vim" ;;
+  emacs) current="  Emacs" ;;
+  esac
+
+  case $(menu "Default Editor" "$options" "" "$current") in
+  *Neovim*) omaniri-default-editor nvim ;;
+  *VSCode*) omaniri-default-editor code ;;
+  *Cursor*) omaniri-default-editor cursor ;;
+  *Zed*) omaniri-default-editor zed ;;
+  *Sublime*) omaniri-default-editor sublime_text ;;
+  *Helix*) omaniri-default-editor helix ;;
+  *Vim*) omaniri-default-editor vim ;;
+  *Emacs*) omaniri-default-editor emacs ;;
+  *) show_setup_default_menu ;;
+  esac
+}
+
+show_setup_config_menu() {
+  case $(menu "Setup" "󰨳  Niri\n  Hypridle\n  Hyprlock\n  Hyprsunset\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰞅  XCompose") in
+  *Niri*) open_in_editor ~/.config/niri/config.kdl ;;
+  *Hypridle*) open_in_editor ~/.config/hypr/hypridle.conf && omaniri-restart-hypridle ;;
+  *Hyprlock*) open_in_editor ~/.config/hypr/hyprlock.conf ;;
+  *Hyprsunset*) open_in_editor ~/.config/hypr/hyprsunset.conf && omaniri-restart-hyprsunset ;;
+  *Swayosd*) open_in_editor ~/.config/swayosd/config.toml && omaniri-restart-swayosd ;;
+  *Walker*) open_in_editor ~/.config/walker/config.toml && omaniri-restart-walker ;;
+  *Waybar*) open_in_editor ~/.config/waybar/config.jsonc && omaniri-restart-waybar ;;
+  *XCompose*) open_in_editor ~/.XCompose && omaniri-restart-xcompose ;;
+  *) show_setup_menu ;;
+  esac
+}
+
+show_setup_system_menu() {
+  local options=""
+
+  if omaniri-toggle-enabled suspend-off; then
+    options="$options󰒲  Enable Suspend"
+  else
+    options="$options󰒲  Disable Suspend"
+  fi
+
+  if omaniri-hibernation-available; then
+    options="$options\n󰤁  Disable Hibernate"
+  else
+    options="$options\n󰤁  Enable Hibernate"
+  fi
+
+  case $(menu "System" "$options") in
+  *Suspend*) omaniri-toggle-suspend ;;
+  *"Enable Hibernate"*) present_terminal omaniri-hibernation-setup ;;
+  *"Disable Hibernate"*) present_terminal omaniri-hibernation-remove ;;
+  *) show_setup_menu ;;
+  esac
+}
+
+show_install_menu() {
+  case $(menu "Install" "󰣇  Package\n󰣇  AUR\n  Web App\n  TUI\n  Service\n  Style\n󰵮  Development\n  Editor\n  Terminal\n  Browser\n󱚤  AI\n  Gaming\n󰍲  Windows") in
+  *Package*) terminal omaniri-pkg-install ;;
+  *AUR*) terminal omaniri-pkg-aur-install ;;
+  *Web*) present_terminal omaniri-webapp-install ;;
+  *TUI*) present_terminal omaniri-tui-install ;;
+  *Service*) show_install_service_menu ;;
+  *Style*) show_install_style_menu ;;
+  *Development*) show_install_development_menu ;;
+  *Editor*) show_install_editor_menu ;;
+  *Terminal*) show_install_terminal_menu ;;
+  *Browser*) show_install_browser_menu ;;
+  *Gaming*) show_install_gaming_menu ;;
+  *AI*) show_install_ai_menu ;;
+  *Windows*) present_terminal "omaniri-windows-vm install" ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_install_browser_menu() {
+  case $(menu "Install" "  Chrome\n  Edge\n  Brave\n  Brave Origin\n  Firefox\n󰖟  Zen") in
+  *Chrome*) present_terminal "omaniri-install-browser chrome" ;;
+  *Edge*) present_terminal "omaniri-install-browser edge" ;;
+  *"Brave Origin"*) present_terminal "omaniri-install-browser brave-origin" ;;
+  *Brave*) present_terminal "omaniri-install-browser brave" ;;
+  *Firefox*) present_terminal "omaniri-install-browser firefox" ;;
+  *Zen*) present_terminal "omaniri-install-browser zen" ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_service_menu() {
+  case $(menu "Install" "  Dropbox\n  Tailscale\n󱇱  NordVPN [AUR]\n󰏖  ONCE\n󰟵  Bitwarden\n  Chromium Account") in
+  *Dropbox*) present_terminal omaniri-install-dropbox ;;
+  *Tailscale*) present_terminal omaniri-install-tailscale ;;
+  *NordVPN*) present_terminal omaniri-install-nordvpn ;;
+  *ONCE*) present_terminal omaniri-install-once ;;
+  *Bitwarden*) install_and_launch "Bitwarden" "bitwarden bitwarden-cli" "bitwarden" ;;
+  *Chromium*) present_terminal omaniri-install-chromium-google-account ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_editor_menu() {
+  case $(menu "Install" "  VSCode\n  Cursor\n  Zed\n  Sublime Text\n  Helix\n  Vim\n  Emacs") in
+  *VSCode*) present_terminal omaniri-install-vscode ;;
+  *Cursor*) install_and_launch "Cursor" "cursor-bin" "cursor" ;;
+  *Zed*) present_terminal omaniri-install-zed ;;
+  *Sublime*) install_and_launch "Sublime Text" "sublime-text-4" "sublime_text" ;;
+  *Helix*) present_terminal omaniri-install-helix ;;
+  *Vim*) install "Vim" "vim" ;;
+  *Emacs*) install "Emacs" "emacs-wayland" && systemctl --user enable --now emacs.service ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_terminal_menu() {
+  case $(menu "Install" "  Alacritty\n  Foot\n  Ghostty\n  Kitty") in
+  *Alacritty*) install_terminal "alacritty" ;;
+  *Foot*) install_terminal "foot" ;;
+  *Ghostty*) install_terminal "ghostty" ;;
+  *Kitty*) install_terminal "kitty" ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_ai_menu() {
+  ollama_pkg=$(
+    (omaniri-cmd-present nvidia-smi && echo ollama-cuda) ||
+      (omaniri-cmd-present rocminfo && echo ollama-rocm) ||
+      echo ollama
+  )
+
+  case $(menu "Install" "  Dictation\n󱚤  LM Studio\n󱚤  Ollama\n󱚤  Crush") in
+  *Dictation*) present_terminal omaniri-voxtype-install ;;
+  *Studio*) install "LM Studio" "lmstudio-bin" ;;
+  *Ollama*) install "Ollama" $ollama_pkg ;;
+  *Crush*) install "Crush" "crush-bin" ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_gaming_menu() {
+  case $(menu "Install" "  Steam\n  RetroArch\n󰍳  Minecraft\n󰢹  NVIDIA GeForce NOW\n  Xbox Cloud Gaming\n󰂯  Xbox Controller\n󰍹  Moonlight (GameStream)\n  Lutris (Battle.net)\n󱓟  Heroic (Epic Games)") in
+  *Steam*) present_terminal omaniri-install-gaming-steam ;;
+  *RetroArch*) present_terminal omaniri-install-gaming-retroarch ;;
+  *Minecraft*) install_and_launch "Minecraft" "minecraft-launcher" "minecraft-launcher" ;;
+  *GeForce*) present_terminal omaniri-install-gaming-geforce-now ;;
+  *"Xbox Cloud"*) present_terminal omaniri-install-gaming-xbox-cloud ;;
+  *Xbox*) present_terminal omaniri-install-gaming-xbox-controllers ;;
+  *Lutris*) present_terminal omaniri-install-gaming-lutris ;;
+  *Heroic*) present_terminal omaniri-install-gaming-heroic ;;
+  *Moonlight*) present_terminal omaniri-install-gaming-moonlight ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_style_menu() {
+  case $(menu "Install" "󰸌  Theme\n  Background\n  Font") in
+  *Theme*) present_terminal omaniri-theme-install ;;
+  *Background*) omaniri-theme-bg-install ;;
+  *Font*) show_install_font_menu ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_font_menu() {
+  case $(menu "Install" "  Cascadia Mono\n  Meslo LG Mono\n  Fira Code\n  Victor Code\n  Bitstream Vera Mono\n  Iosevka" "--width 350") in
+  *Cascadia*) install_font "Cascadia Mono" "ttf-cascadia-mono-nerd" "CaskaydiaMono Nerd Font" ;;
+  *Meslo*) install_font "Meslo LG Mono" "ttf-meslo-nerd" "MesloLGL Nerd Font" ;;
+  *Fira*) install_font "Fira Code" "ttf-firacode-nerd" "FiraCode Nerd Font" ;;
+  *Victor*) install_font "Victor Code" "ttf-victor-mono-nerd" "VictorMono Nerd Font" ;;
+  *Bitstream*) install_font "Bitstream Vera Code" "ttf-bitstream-vera-mono-nerd" "BitstromWera Nerd Font" ;;
+  *Iosevka*) install_font "Iosevka" "ttf-iosevka-nerd" "Iosevka Nerd Font Mono" ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_development_menu() {
+  case $(menu "Install" "󰫏  Ruby on Rails\n  Docker DB\n  JavaScript\n  Go\n  PHP\n  Python\n  Elixir\n  Zig\n  Rust\n  Java\n  .NET\n  OCaml\n  Clojure\n  Scala") in
+  *Rails*) present_terminal "omaniri-install-dev-env ruby" ;;
+  *Docker*) present_terminal omaniri-install-docker-dbs ;;
+  *JavaScript*) show_install_javascript_menu ;;
+  *Go*) present_terminal "omaniri-install-dev-env go" ;;
+  *PHP*) show_install_php_menu ;;
+  *Python*) present_terminal "omaniri-install-dev-env python" ;;
+  *Elixir*) show_install_elixir_menu ;;
+  *Zig*) present_terminal "omaniri-install-dev-env zig" ;;
+  *Rust*) present_terminal "omaniri-install-dev-env rust" ;;
+  *Java*) present_terminal "omaniri-install-dev-env java" ;;
+  *NET*) present_terminal "omaniri-install-dev-env dotnet" ;;
+  *OCaml*) present_terminal "omaniri-install-dev-env ocaml" ;;
+  *Clojure*) present_terminal "omaniri-install-dev-env clojure" ;;
+  *Scala*) present_terminal "omaniri-install-dev-env scala" ;;
+  *) show_install_menu ;;
+  esac
+}
+
+show_install_javascript_menu() {
+  case $(menu "Install" "  Node.js\n  Bun\n  Deno") in
+  *Node*) present_terminal "omaniri-install-dev-env node" ;;
+  *Bun*) present_terminal "omaniri-install-dev-env bun" ;;
+  *Deno*) present_terminal "omaniri-install-dev-env deno" ;;
+  *) show_install_development_menu ;;
+  esac
+}
+
+show_install_php_menu() {
+  case $(menu "Install" "  PHP\n  Laravel\n  Symfony") in
+  *PHP*) present_terminal "omaniri-install-dev-env php" ;;
+  *Laravel*) present_terminal "omaniri-install-dev-env laravel" ;;
+  *Symfony*) present_terminal "omaniri-install-dev-env symfony" ;;
+  *) show_install_development_menu ;;
+  esac
+}
+
+show_install_elixir_menu() {
+  case $(menu "Install" "  Elixir\n  Phoenix") in
+  *Elixir*) present_terminal "omaniri-install-dev-env elixir" ;;
+  *Phoenix*) present_terminal "omaniri-install-dev-env phoenix" ;;
+  *) show_install_development_menu ;;
+  esac
+}
+
+show_remove_menu() {
+  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n󰸌  Theme\n  Browser\n  Dictation\n  Gaming\n󰍲  Windows\n󰏓  Preinstalls\n  Security") in
+  *Package*) terminal omaniri-pkg-remove ;;
+  *Web*) present_terminal omaniri-webapp-remove ;;
+  *TUI*) present_terminal omaniri-tui-remove ;;
+  *Development*) show_remove_development_menu ;;
+  *Theme*) present_terminal omaniri-theme-remove ;;
+  *Browser*) show_remove_browser_menu ;;
+  *Dictation*) present_terminal omaniri-voxtype-remove ;;
+  *Gaming*) show_remove_gaming_menu ;;
+  *Windows*) present_terminal "omaniri-windows-vm remove" ;;
+  *Preinstalls*) present_terminal omaniri-remove-preinstalls ;;
+  *Security*) show_remove_security_menu ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_remove_security_menu() {
+  case $(menu "Remove" "󰈷  Fingerprint\n  Fido2") in
+  *Fingerprint*) present_terminal omaniri-remove-security-fingerprint ;;
+  *Fido2*) present_terminal omaniri-remove-security-fido2 ;;
+  *) show_remove_menu ;;
+  esac
+}
+
+show_remove_browser_menu() {
+  case $(menu "Remove" "  Chrome\n  Edge\n  Brave\n  Brave Origin\n  Firefox\n  Zen") in
+  *Chrome*) present_terminal "omaniri-remove-browser chrome" ;;
+  *Edge*) present_terminal "omaniri-remove-browser edge" ;;
+  *"Brave Origin"*) present_terminal "omaniri-remove-browser brave-origin" ;;
+  *Brave*) present_terminal "omaniri-remove-browser brave" ;;
+  *Firefox*) present_terminal "omaniri-remove-browser firefox" ;;
+  *Zen*) present_terminal "omaniri-remove-browser zen" ;;
+  *) show_remove_menu ;;
+  esac
+}
+
+show_remove_gaming_menu() {
+  case $(menu "Remove" "  Steam\n  RetroArch\n󰍳  Minecraft\n󰢹  NVIDIA GeForce NOW\n  Xbox Cloud Gaming\n󰖺  Xbox Controller (󰂯)\n󰍹  Moonlight (GameStream)\n  Lutris (Battle.net)\n󱓟  Heroic (Epic Games)") in
+  *Steam*) present_terminal omaniri-remove-gaming-steam ;;
+  *RetroArch*) present_terminal omaniri-remove-gaming-retroarch ;;
+  *Minecraft*) present_terminal omaniri-remove-gaming-minecraft ;;
+  *GeForce*) present_terminal omaniri-remove-gaming-geforce-now ;;
+  *"Xbox Cloud"*) present_terminal omaniri-remove-gaming-xbox-cloud ;;
+  *Xbox*) present_terminal omaniri-remove-gaming-xbox-controllers ;;
+  *Moonlight*) present_terminal omaniri-remove-gaming-moonlight ;;
+  *Lutris*) present_terminal omaniri-remove-gaming-lutris ;;
+  *Heroic*) present_terminal omaniri-remove-gaming-heroic ;;
+  *) show_remove_menu ;;
+  esac
+}
+
+show_remove_development_menu() {
+  case $(menu "Remove" "󰫏  Ruby on Rails\n  JavaScript\n  Go\n  PHP\n  Python\n  Elixir\n  Zig\n  Rust\n  Java\n  .NET\n  OCaml\n  Clojure\n  Scala") in
+  *Rails*) present_terminal "omaniri-remove-dev-env ruby" ;;
+  *JavaScript*) show_remove_javascript_menu ;;
+  *Go*) present_terminal "omaniri-remove-dev-env go" ;;
+  *PHP*) show_remove_php_menu ;;
+  *Python*) present_terminal "omaniri-remove-dev-env python" ;;
+  *Elixir*) show_remove_elixir_menu ;;
+  *Zig*) present_terminal "omaniri-remove-dev-env zig" ;;
+  *Rust*) present_terminal "omaniri-remove-dev-env rust" ;;
+  *Java*) present_terminal "omaniri-remove-dev-env java" ;;
+  *NET*) present_terminal "omaniri-remove-dev-env dotnet" ;;
+  *OCaml*) present_terminal "omaniri-remove-dev-env ocaml" ;;
+  *Clojure*) present_terminal "omaniri-remove-dev-env clojure" ;;
+  *Scala*) present_terminal "omaniri-remove-dev-env scala" ;;
+  *) show_remove_menu ;;
+  esac
+}
+
+show_remove_javascript_menu() {
+  case $(menu "Remove" "  Node.js\n  Bun\n  Deno") in
+  *Node*) present_terminal "omaniri-remove-dev-env node" ;;
+  *Bun*) present_terminal "omaniri-remove-dev-env bun" ;;
+  *Deno*) present_terminal "omaniri-remove-dev-env deno" ;;
+  *) show_remove_development_menu ;;
+  esac
+}
+
+show_remove_php_menu() {
+  case $(menu "Remove" "  PHP\n  Laravel\n  Symfony") in
+  *PHP*) present_terminal "omaniri-remove-dev-env php" ;;
+  *Laravel*) present_terminal "omaniri-remove-dev-env laravel" ;;
+  *Symfony*) present_terminal "omaniri-remove-dev-env symfony" ;;
+  *) show_remove_development_menu ;;
+  esac
+}
+
+show_remove_elixir_menu() {
+  case $(menu "Remove" "  Elixir\n  Phoenix") in
+  *Elixir*) present_terminal "omaniri-remove-dev-env elixir" ;;
+  *Phoenix*) present_terminal "omaniri-remove-dev-env phoenix" ;;
+  *) show_remove_development_menu ;;
+  esac
+}
+
+show_update_menu() {
+  case $(menu "Update" "\ue903 Omaniri\n  Config\n󰸌  Extra Themes\n  Process\n󰇅  Hardware\n  Firmware\n  Password\n  Timezone\n  Time") in
+  *omaniri*) present_terminal omaniri-update ;;
+  *Config*) show_update_config_menu ;;
+  *Themes*) present_terminal omaniri-theme-update ;;
+  *Process*) show_update_process_menu ;;
+  *Hardware*) show_update_hardware_menu ;;
+  *Firmware*) present_terminal omaniri-update-firmware ;;
+  *Timezone*) present_terminal omaniri-tz-select ;;
+  *Time*) present_terminal omaniri-update-time ;;
+  *Password*) show_update_password_menu ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_update_process_menu() {
+  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n󰎟  Mako\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
+  *Hypridle*) omaniri-restart-hypridle ;;
+  *Hyprsunset*) omaniri-restart-hyprsunset ;;
+  *Mako*) omaniri-restart-mako ;;
+  *Swayosd*) omaniri-restart-swayosd ;;
+  *Walker*) omaniri-restart-walker ;;
+  *Waybar*) omaniri-restart-waybar ;;
+  *) show_update_menu ;;
+  esac
+}
+
+show_update_config_menu() {
+  case $(menu "Use default config" "󰡭  Hypridle\n  Hyprlock\n  Hyprsunset\n󱣴  Plymouth\n  Swayosd\n  Tmux\n󰌧  Walker\n󰍜  Waybar") in
+  *Hypridle*) present_terminal omaniri-refresh-hypridle ;;
+  *Hyprlock*) present_terminal omaniri-refresh-hyprlock ;;
+  *Hyprsunset*) present_terminal omaniri-refresh-hyprsunset ;;
+  *Plymouth*) present_terminal omaniri-refresh-plymouth ;;
+  *Swayosd*) present_terminal omaniri-refresh-swayosd ;;
+  *Tmux*) present_terminal omaniri-refresh-tmux ;;
+  *Walker*) present_terminal omaniri-refresh-walker ;;
+  *Waybar*) present_terminal omaniri-refresh-waybar ;;
+  *) show_update_menu ;;
+  esac
+}
+
+show_update_hardware_menu() {
+  case $(menu "Restart" "  Audio\n󱚾  Wi-Fi\n󰂯  Bluetooth\n󰟸  Trackpad") in
+  *Audio*) present_terminal omaniri-restart-pipewire ;;
+  *Wi-Fi*) present_terminal omaniri-restart-wifi ;;
+  *Bluetooth*) present_terminal omaniri-restart-bluetooth ;;
+  *Trackpad*) present_terminal omaniri-restart-trackpad ;;
+  *) show_update_menu ;;
+  esac
+}
+
+show_update_password_menu() {
+  case $(menu "Update Password" "  Drive Encryption\n  User") in
+  *Drive*) present_terminal omaniri-drive-password ;;
+  *User*) present_terminal passwd ;;
+  *) show_update_menu ;;
+  esac
+}
+
+show_about() {
+  omaniri-launch-about
+}
+
+show_system_menu() {
+  local options="󱄄  Screensaver\n  Lock"
+  ! omaniri-toggle-enabled suspend-off && options="$options\n󰒲  Suspend"
+  omaniri-hibernation-available && options="$options\n󰤁  Hibernate"
+  options="$options\n󰍃  Logout\n󰜉  Restart\n󰐥  Shutdown"
+
+  case $(menu "System" "$options") in
+  *Screensaver*) omaniri-launch-screensaver force ;;
+  *Lock*) omaniri-system-lock ;;
+  *Suspend*) systemctl suspend ;;
+  *Hibernate*) systemctl hibernate ;;
+  *Logout*) omaniri-system-logout ;;
+  *Restart*) omaniri-system-reboot ;;
+  *Shutdown*) omaniri-system-shutdown ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_main_menu() {
+  go_to_menu "$(menu "Go" "󰀻  Apps\n󰧑  Learn\n󱓞  Trigger\n  Style\n  Setup\n󰉉  Install\n󰭌  Remove\n  Update\n  About\n  System")"
+}
+
+go_to_menu() {
+  case "${1,,}" in
+  *apps*) walker -p "Launch…" ;;
+  *learn*) show_learn_menu ;;
+  *trigger*) show_trigger_menu ;;
+  *toggle*) show_toggle_menu ;;
+  *hardware*) show_hardware_menu ;;
+  *share*) show_share_menu ;;
+  *reminder-set*) show_custom_reminder_input ;;
+  *reminder*) show_reminder_menu ;;
+  *background*) show_background_menu ;;
+  *capture*) show_capture_menu ;;
+  *style*) show_style_menu ;;
+  *theme*) show_theme_menu ;;
+  *screenrecord*) show_screenrecord_menu ;;
+  *battery*) show_battery_menu ;;
+  *setup*) show_setup_menu ;;
+  *power*) show_setup_power_menu ;;
+  *install*) show_install_menu ;;
+  *remove*) show_remove_menu ;;
+  *update*) show_update_menu ;;
+  *about*) show_about ;;
+  *system*) show_system_menu ;;
+  esac
+}
+
+# Allow user extensions and overrides
+USER_EXTENSIONS="$HOME/.config/omaniri/extensions/menu.sh"
+[[ -f $USER_EXTENSIONS ]] && source "$USER_EXTENSIONS"
+
+toggle_existing_menu
+
+if [[ -n $1 ]]; then
+  BACK_TO_EXIT=true
+  go_to_menu "$1"
+else
+  show_main_menu
+fi

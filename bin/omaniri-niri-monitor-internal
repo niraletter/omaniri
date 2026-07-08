@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# omaniri:summary=Enable, disable, toggle, or recover the internal laptop display
+# omaniri:group=niri
+# omaniri:args=<on|off|toggle|recover>
+
+TOGGLE="internal-monitor-disable"
+TOGGLE_FLAG="$HOME/.local/state/omaniri/toggles/niri/$TOGGLE.kdl"
+MIRROR_TOGGLE="internal-monitor-mirror"
+
+INTERNAL=$(niri msg -j outputs 2>/dev/null | jq -r '
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
+  | .[] | select(.name | test("eDP"; "i")) | .name
+  ' | head -n 1)
+
+enable() {
+  if omaniri-niri-toggle-enabled "$TOGGLE"; then
+    omaniri-niri-toggle --disabled-notification "󰍹    Laptop display enabled" "$TOGGLE"
+  fi
+}
+
+disable() {
+  if ! omaniri-hw-external-monitors; then
+    notify-send -u low "󰍹    Can't disable the only active display"
+    exit 1
+  fi
+  if [[ -z $INTERNAL ]]; then
+    notify-send -u low "󰍹    No laptop monitor found"
+    exit 1
+  fi
+  if omaniri-niri-toggle-disabled "$TOGGLE" && omaniri-niri-toggle-disabled "$MIRROR_TOGGLE"; then
+    printf 'output "%s" {\n    off\n}\n' "$INTERNAL" >"$TOGGLE_FLAG"
+    notify-send -u low "󰍹    Laptop display disabled"
+    omaniri-niri-rebuild-toggles
+  fi
+}
+
+recover() {
+  if ! omaniri-hw-external-monitors && omaniri-niri-toggle-enabled "$TOGGLE"; then
+    omaniri-niri-toggle "$TOGGLE"
+  fi
+}
+
+case "$1" in
+  on) enable ;;
+  off) disable ;;
+  toggle) if omaniri-niri-toggle-enabled "$TOGGLE"; then enable; else disable; fi ;;
+  recover) recover ;;
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Close all open windows
+# omaniri:group=niri
+
+omaniri-cmd-present niri || exit 0
+
+niri msg -j windows 2>/dev/null | jq -r '
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
+  | .[].id
+' | while read -r id; do
+  [[ -n $id ]] && niri msg action close-window "$id" >/dev/null 2>&1
+done
+
+niri msg action focus-workspace 1 >/dev/null 2>&1 || true

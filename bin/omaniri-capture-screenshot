@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# omaniri:summary=Take a screenshot
+# omaniri:group=capture
+# omaniri:args=[smart|region|windows|fullscreen] [slurp|copy|save] [--editor=<name>]
+# omaniri:examples=omaniri screenshot | omaniri capture screenshot region
+# omaniri:aliases=omaniri screenshot
+#
+# Uses grim + slurp on niri (wlr-screencopy). smart/windows modes pre-fill slurp with
+# monitor and floating-window rectangles from niri msg; tiled windows without
+# tile_pos_in_workspace_view are not listed (draw a region manually).
+
+OMANIRI_PATH="${OMANIRI_PATH:-$HOME/.local/share/omaniri}"
+source "$OMANIRI_PATH/default/bash/fns/capture"
+
+[[ -f ~/.config/user-dirs.dirs ]] && source ~/.config/user-dirs.dirs
+OUTPUT_DIR="${OMANIRI_SCREENSHOT_DIR:-${XDG_PICTURES_DIR:-$HOME/Pictures}}"
+
+if [[ ! -d $OUTPUT_DIR ]]; then
+  mkdir -p "$OUTPUT_DIR"
+  notify-send "Created screenshot directory: $OUTPUT_DIR" -u normal -t 2000
+fi
+
+pkill slurp && exit 0
+
+if ! omaniri-cmd-present grim; then
+  notify-send "Screenshot" "grim is not installed" -u critical -t 5000
+  exit 1
+fi
+
+SCREENSHOT_EDITOR="${OMANIRI_SCREENSHOT_EDITOR:-satty}"
+
+ARGS=()
+for arg in "$@"; do
+  if [[ $arg == --editor=* ]]; then
+    SCREENSHOT_EDITOR="${arg#--editor=}"
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
+
+open_editor() {
+  local filepath=$1
+  if [[ $SCREENSHOT_EDITOR == "satty" ]]; then
+    satty --filename "$filepath" \
+      --output-filename "$filepath" \
+      --actions-on-enter save-to-clipboard \
+      --save-after-copy \
+      --copy-command 'wl-copy'
+  else
+    $SCREENSHOT_EDITOR "$filepath"
+  fi
+}
+
+MODE="${1:-smart}"
+PROCESSING="${2:-slurp}"
+
+cleanup_freeze() {
+  omaniri_capture_freeze_stop "$PID"
+}
+trap cleanup_freeze EXIT
+
+case "$MODE" in
+region)
+  PID=$(omaniri_capture_freeze_start)
+  sleep .1
+  SELECTION=$(slurp 2>/dev/null)
+  ;;
+windows)
+  if ! omaniri_capture_niri_available; then
+    notify-send "Screenshot" "niri is not running" -u critical -t 5000
+    exit 1
+  fi
+  RECTS=$(omaniri_capture_get_rectangles)
+  PID=$(omaniri_capture_freeze_start)
+  sleep .1
+  if [[ -n $RECTS ]]; then
+    SELECTION=$(echo "$RECTS" | slurp -r 2>/dev/null)
+    SELECTION=$(omaniri_capture_snap_selection "$SELECTION" "$RECTS" 2>/dev/null) || true
+  else
+    SELECTION=$(slurp 2>/dev/null)
+  fi
+  ;;
+fullscreen)
+  if ! omaniri_capture_niri_available; then
+    notify-send "Screenshot" "niri is not running" -u critical -t 5000
+    exit 1
+  fi
+  SELECTION=$(niri msg -j focused-output 2>/dev/null | jq -r '
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
+    | .logical as $l |
+    "\($l.x),\($l.y) \($l.width | floor)x\($l.height | floor)"
+  ')
+  ;;
+smart | *)
+  if ! omaniri_capture_niri_available; then
+    notify-send "Screenshot" "niri is not running" -u critical -t 5000
+    exit 1
+  fi
+  RECTS=$(omaniri_capture_get_rectangles)
+  PID=$(omaniri_capture_freeze_start)
+  sleep .1
+  SELECTION=$(echo "$RECTS" | slurp 2>/dev/null)
+  SELECTION=$(omaniri_capture_snap_selection "$SELECTION" "$RECTS" 2>/dev/null) || true
+  ;;
+esac
+
+[[ -z $SELECTION ]] && exit 0
+
+FILENAME="screenshot-$(date +'%Y-%m-%d_%H-%M-%S').png"
+FILEPATH="$OUTPUT_DIR/$FILENAME"
+
+case "$PROCESSING" in
+slurp)
+  grim -g "$SELECTION" "$FILEPATH" || {
+    notify-send "Screenshot failed" "grim could not capture the selection" -u critical -t 5000
+    exit 1
+  }
+  echo "$FILEPATH"
+  wl-copy <"$FILEPATH"
+
+  (
+    ACTION=$(notify-send "Screenshot saved to clipboard and file" "Edit with Super + Alt + , (or click this)" -t 10000 -i "$FILEPATH" -A "default=edit")
+    [[ $ACTION == "default" ]] && open_editor "$FILEPATH"
+  ) >/dev/null 2>&1 &
+  ;;
+copy)
+  grim -g "$SELECTION" - | wl-copy || {
+    notify-send "Screenshot failed" "grim could not capture the selection" -u critical -t 5000
+    exit 1
+  }
+  ;;
+save)
+  grim -g "$SELECTION" "$FILEPATH" || {
+    notify-send "Screenshot failed" "grim could not capture the selection" -u critical -t 5000
+    exit 1
+  }
+  echo "$FILEPATH"
+  ;;
+esac

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omaniri:summary=Print the name of the currently focused monitor.
+# omaniri:group=niri
+
+niri msg -j focused-output 2>/dev/null | jq -r '
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end) | .name // empty
+'

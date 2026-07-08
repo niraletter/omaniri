@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Reinstall the omaniri source directory from git
+
+set -e
+
+# Reinstall the omaniri configuration directory from the git source.
+
+git clone --depth=1 "https://github.com/basecamp/omaniri.git" ~/.local/share/omaniri-new >/dev/null
+mv $OMANIRI_PATH ~/.local/share/omaniri-old
+mv ~/.local/share/omaniri-new $OMANIRI_PATH

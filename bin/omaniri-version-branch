@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Print the current omaniri git branch
+
+echo $(git -C "$OMANIRI_PATH" rev-parse --abbrev-ref HEAD)

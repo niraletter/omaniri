@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle to pop-out a tile to stay fixed on a display basis.
+# omaniri:group=niri
+# omaniri:args=[width height x y]
+
+width=${1:-1300}
+height=${2:-900}
+x=${3:-}
+y=${4:-}
+
+focused=$(niri msg -j focused-window 2>/dev/null | jq -c '
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
+')
+[[ -z $focused || $focused == "null" ]] && exit 0
+
+window_id=$(echo "$focused" | jq -r '.id')
+is_floating=$(echo "$focused" | jq -r '.is_floating')
+
+if [[ $is_floating == "true" ]]; then
+  niri msg action move-window-to-tiling "$window_id" >/dev/null 2>&1
+else
+  niri msg action move-window-to-floating "$window_id" >/dev/null 2>&1
+  niri msg action set-window-width "$window_id" "fixed $width" >/dev/null 2>&1 || true
+  niri msg action set-window-height "$window_id" "fixed $height" >/dev/null 2>&1 || true
+
+  if [[ -n $x && -n $y ]]; then
+    niri msg action move-floating-window "$window_id" "x fixed $x" "y fixed $y" >/dev/null 2>&1 || true
+  else
+    niri msg action center-window "$window_id" >/dev/null 2>&1 || true
+  fi
+fi

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# omaniri:summary=Launch a URL as a web app in the default supported browser
+# omaniri:args=<url>
+
+browser=$(xdg-settings get default-web-browser)
+
+case $browser in
+chromium* | brave* | microsoft-edge* | opera* | vivaldi* | helium*) ;;
+*) browser="google-chrome.desktop" ;;
+esac
+
+exec setsid $(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/$browser 2>/dev/null | head -1) --app="$1" "${@:2}"

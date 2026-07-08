@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite the user tmux config with the omaniri default and reload tmux.
+
+omaniri-refresh-config tmux/tmux.conf
+omaniri-restart-tmux

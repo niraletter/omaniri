@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# omaniri:summary=Cycle power profile (quiet → balanced → performance)
+# omaniri:requires-sudo=true
+
+current=$(cat /sys/firmware/acpi/platform_profile)
+case "$current" in
+  quiet)       next="balanced";    label="Balanced";     icon="power-profile-balanced-symbolic" ;;
+  balanced)    next="performance"; label="Performance";  icon="power-profile-performance-symbolic" ;;
+  performance) next="quiet";       label="Quiet";        icon="power-profile-power-saver-symbolic" ;;
+  *)           next="balanced";    label="Balanced";     icon="power-profile-balanced-symbolic" ;;
+esac
+echo "$next" | sudo tee /sys/firmware/acpi/platform_profile >/dev/null
+omaniri-swayosd-client \
+  --custom-message "Fan: $label" \
+  --custom-icon "$icon"

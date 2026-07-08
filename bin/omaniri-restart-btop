@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Reload btop configuration (used by the omaniri theme switching).
+
+pkill -SIGUSR2 btop

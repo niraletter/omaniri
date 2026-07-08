@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# omaniri:summary=Upload logs to CachyOS paste
+# omaniri:args=<log-file>
+# omaniri:hidden=true
+
+LOG_TYPE="${1:-install}"
+TEMP_LOG="/tmp/upload-log.txt"
+SYSTEM_INFO="/tmp/system-info.txt"
+
+if command -v fastfetch >/dev/null 2>&1; then
+  {
+    echo "========================================="
+    echo "SYSTEM INFORMATION"
+    echo "========================================="
+    fastfetch --logo none --pipe 2>/dev/null || echo "Failed to get system info"
+    echo ""
+    echo "========================================="
+    echo "LOG CONTENT"
+    echo "========================================="
+    echo ""
+  } >"$SYSTEM_INFO"
+else
+  {
+    echo "========================================="
+    echo "SYSTEM INFORMATION"
+    echo "========================================="
+    echo "Hostname: $(hostname)"
+    echo "Kernel: $(uname -r)"
+    echo "Date: $(date)"
+    echo ""
+    echo "========================================="
+    echo "LOG CONTENT"
+    echo "========================================="
+    echo ""
+  } >"$SYSTEM_INFO"
+fi
+
+case "$LOG_TYPE" in
+install)
+  ARCHINSTALL_LOG="/var/log/archinstall/install.log"
+  OMANIRI_LOG="/var/log/omaniri-install.log"
+
+  cat "$SYSTEM_INFO" >"$TEMP_LOG"
+  cat "$ARCHINSTALL_LOG" "$OMANIRI_LOG" >>"$TEMP_LOG" 2>/dev/null
+
+  echo "Uploading installation log..."
+  ;;
+
+this-boot)
+  cat "$SYSTEM_INFO" >"$TEMP_LOG"
+  journalctl -b 0 >>"$TEMP_LOG" 2>/dev/null
+
+  echo "Uploading current boot logs..."
+  ;;
+
+last-boot)
+  cat "$SYSTEM_INFO" >"$TEMP_LOG"
+  journalctl -b -1 >>"$TEMP_LOG" 2>/dev/null
+
+  echo "Uploading previous boot logs..."
+  ;;
+
+installed|system-info)
+  cat "$SYSTEM_INFO" >"$TEMP_LOG"
+  {
+    echo ""
+    echo "========================================="
+    echo "INSTALLED PACKAGES (pacman -Q)"
+    echo "========================================="
+    pacman -Q 2>/dev/null
+  } >>"$TEMP_LOG"
+
+  echo "Uploading system information log..."
+  ;;
+
+*)
+  echo "Usage: $0 [install|this-boot|last-boot|installed|system-info]"
+  exit 1
+  ;;
+esac
+
+echo ""
+
+URL="$(omaniri-paste <"$TEMP_LOG")"
+
+echo "✓ Log uploaded successfully!"
+echo "Share this URL:"
+echo ""
+echo "  $URL"
+echo ""

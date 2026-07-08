@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Restart the XCompose input method service (fcitx5) to apply new compose key settings.
+
+omaniri-restart-app fcitx5 --disable notificationitem

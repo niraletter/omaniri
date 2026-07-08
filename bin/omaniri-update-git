@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# omaniri:summary=Pull the latest omaniri git changes
+
+set -e
+
+echo -e "\e[32mUpdate omaniri\e[0m"
+
+# Reload niri after git updates default config files mid-pull
+
+git -C $OMANIRI_PATH pull --autostash
+git -C $OMANIRI_PATH --no-pager diff --check || git -C $OMANIRI_PATH reset --merge
+
+omaniri-cmd-present niri && niri msg action load-config-file >/dev/null 2>&1 || true

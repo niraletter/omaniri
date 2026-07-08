@@ -1,0 +1,32 @@
+input {
+    keyboard {
+        xkb {
+            layout "us"
+            options "caps:none"
+        }
+        numlock
+        repeat-delay 250
+        repeat-rate 40
+    }
+
+    touchpad {
+        tap
+        dwt
+        natural-scroll
+        scroll-factor  0.4
+    }
+
+    mouse {
+        accel-speed -0.8
+    }
+
+    disable-power-key-handling
+    //focus-follows-mouse
+    focus-follows-mouse max-scroll-amount="0%"
+    warp-mouse-to-focus
+
+}
+
+cursor {
+    hide-when-typing
+}

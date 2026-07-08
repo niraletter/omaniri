@@ -1,0 +1,7 @@
+// Float LocalSend and fzf file picker
+window-rule {
+    match app-id="Share|localsend"
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 700; }
+}

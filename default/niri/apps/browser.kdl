@@ -1,0 +1,42 @@
+// Browser types
+// https://niri-wm.github.io/niri/Configuration:-Window-Rules.html
+
+window-rule {
+    match app-id="(?i)((google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium)"
+    open-floating false
+}
+
+window-rule {
+    match app-id="(?i)((google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium)"
+    match is-active=true
+    opacity 1.0
+}
+window-rule {
+    match app-id="(?i)((google-)?chrom(e|ium)|brave-browser|microsoft-edge|vivaldi-stable|helium)"
+    match is-active=false
+    opacity 0.97
+}
+
+window-rule {
+    match app-id="(?i)(firefox|zen|librewolf)"
+    match is-active=true
+    opacity 1.0
+}
+window-rule {
+    match app-id="(?i)(firefox|zen|librewolf)"
+    match is-active=false
+    opacity 0.97
+}
+
+// Video apps: full opacity (YouTube PWA, Zoom web client)
+window-rule {
+    match app-id="chrome-youtube.com__-Default|chrome-app.zoom.us__wc_home-Default"
+    opacity 1.0
+}
+
+// Hide the screen-sharing notification bar (Hypr: workspace special silent)
+window-rule {
+    match title=".*is sharing.*"
+    open-floating true
+    open-focused false
+}

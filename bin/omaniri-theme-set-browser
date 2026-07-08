@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# omaniri:summary=Apply the current theme color to Chromium, Chrome, Edge, and Brave
+# omaniri:hidden=true
+
+# Check for generated google.theme first, then fall back to google-chrome.theme
+CHROMIUM_THEME=~/.config/omaniri/current/theme/google-chrome.theme
+
+if [[ -f $CHROMIUM_THEME ]]; then
+  THEME_RGB_COLOR=$(<$CHROMIUM_THEME)
+  THEME_HEX_COLOR=$(printf '#%02x%02x%02x' ${THEME_RGB_COLOR//,/ })
+elif [[ -f ~/.config/omaniri/current/theme/google-chrome.theme ]]; then
+  THEME_RGB_COLOR=$(<~/.config/omaniri/current/theme/google-chrome.theme)
+  THEME_HEX_COLOR=$(printf '#%02x%02x%02x' ${THEME_RGB_COLOR//,/ })
+else
+  # Use a default, neutral grey if theme doesn't have a color
+  THEME_HEX_COLOR="#1c2027"
+fi
+
+set_browser_policy() {
+  local policy_dir="$1"
+
+  [[ -d $policy_dir ]] || return
+  echo "{\"BrowserThemeColor\": \"$THEME_HEX_COLOR\", \"BrowserColorScheme\": \"device\"}" | tee "$policy_dir/color.json" >/dev/null
+}
+
+refresh_running_browser() {
+  local process="$1"
+  local command="$2"
+  local pgrep_args="${3:--x}"
+
+  if omaniri-cmd-present "$command" && pgrep $pgrep_args "$process" >/dev/null; then
+    "$command" --refresh-platform-policy --no-startup-window &>/dev/null
+  fi
+}
+
+set_browser_policy /etc/opt/chrome/policies/managed
+refresh_running_browser chrome google-chrome-stable || refresh_running_browser chrome google-chrome
+
+set_browser_policy /etc/opt/edge/policies/managed
+refresh_running_browser msedge microsoft-edge-stable
+
+set_browser_policy /etc/brave/policies/managed
+refresh_running_browser brave brave
+refresh_running_browser brave-origin-beta brave-origin-beta -f

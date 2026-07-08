@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Launch the omaniri bluetooth controls TUI (provided by bluetui).
+
+rfkill unblock bluetooth
+exec omaniri-launch-or-focus-tui bluetui

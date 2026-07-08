@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Launch a floating terminal with the omaniri presentation wrapper
+# omaniri:args=<command>
+
+cmd="$*"
+exec setsid xdg-terminal-exec --app-id=org.omaniri.terminal --title=omaniri -e bash -c "omaniri-show-logo; $cmd; if (( \$? != 130 )); then omaniri-show-done; fi"

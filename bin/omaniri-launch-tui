@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Launch a TUI command in the default terminal with omaniri styling
+# omaniri:args=<command> [args...]
+
+exec setsid xdg-terminal-exec --app-id=org.omaniri.$(basename $1) -e "$1" "${@:2}"

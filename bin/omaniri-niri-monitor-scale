@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# omaniri:summary=Print the scale of the internal (eDP) monitor, or the first output.
+# omaniri:group=niri
+
+niri msg -j outputs 2>/dev/null | jq -r '
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
+  | ([.[] | select(.name | test("eDP"; "i"))][0] // .[0])
+  | .logical.scale // empty
+  | tonumber
+  | if . == floor then floor else . end
+'

@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# omaniri:summary=Extract text from a screenshot region with OCR
+# omaniri:group=capture
+# omaniri:examples=omaniri capture ocr
+#
+# Region pick: slurp (wlr-screencopy, works on niri). Capture: grim -g. OCR: tesseract.
+# Optional hyprpicker freeze before slurp. Set OMANIRI_OCR_LANGS (e.g. "eng+deu") if needed.
+
+OMANIRI_PATH="${OMANIRI_PATH:-$HOME/.local/share/omaniri}"
+source "$OMANIRI_PATH/default/bash/fns/capture"
+
+cleanup_freeze() {
+  omaniri_capture_freeze_stop "$PID"
+}
+trap cleanup_freeze EXIT
+
+if ! omaniri-cmd-present grim; then
+  notify-send "Text extraction" "grim is not installed" -u critical -t 5000
+  exit 1
+fi
+
+if ! omaniri-cmd-present slurp; then
+  notify-send "Text extraction" "slurp is not installed" -u critical -t 5000
+  exit 1
+fi
+
+if ! omaniri-cmd-present tesseract; then
+  notify-send "Text extraction" "tesseract is not installed" -u critical -t 5000
+  exit 1
+fi
+
+if ! omaniri-cmd-present wl-copy; then
+  notify-send "Text extraction" "wl-copy is not installed" -u critical -t 5000
+  exit 1
+fi
+
+PID=$(omaniri_capture_freeze_start)
+sleep .1
+SELECTION=$(slurp 2>/dev/null)
+
+[[ -z $SELECTION ]] && exit 0
+
+TEXT=$(grim -g "$SELECTION" - 2>/dev/null | tesseract stdin stdout --oem 1 --psm 6 -l "${OMANIRI_OCR_LANGS:-eng}" --dpi 300 -c preserve_interword_spaces=1 2>/dev/null) || {
+  notify-send "Text extraction" "Capture or OCR failed" -u critical -t 5000
+  exit 1
+}
+
+[[ -n ${TEXT//[[:space:]]/} ]] || {
+  notify-send "Text extraction" "No text found in selection" -u low -t 5000
+  exit 1
+}
+
+printf '%s' "$TEXT" | wl-copy
+notify-send "󱄺    Copied text from selection to clipboard"

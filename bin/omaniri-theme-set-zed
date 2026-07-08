@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# omaniri:summary=Sync omaniri theme to Zed editor
+# omaniri:hidden=true
+
+omaniri-cmd-present zeditor || exit 0
+
+THEME_PATH="$HOME/.config/omaniri/current/theme"
+ZED_THEMES_DIR="$HOME/.config/zed/themes"
+GENERATOR="$OMANIRI_PATH/default/zed/omazed-generator.sh"
+TEMPLATE="$OMANIRI_PATH/default/zed/omazed-theme.tpl"
+
+colors_toml="$THEME_PATH/colors.toml"
+alacritty_toml="$THEME_PATH/alacritty.toml"
+
+if [[ -f $colors_toml ]]; then
+  source_file="$colors_toml"
+elif [[ -f $alacritty_toml ]]; then
+  source_file="$alacritty_toml"
+else
+  exit 0
+fi
+
+appearance="dark"
+[[ -f $THEME_PATH/light.mode ]] && appearance="light"
+
+mkdir -p "$ZED_THEMES_DIR"
+
+bash "$GENERATOR" "$source_file" "$ZED_THEMES_DIR" "$TEMPLATE" "$appearance" >/dev/null

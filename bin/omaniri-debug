@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# omaniri:summary=Print debugging information
+# omaniri:args=[--no-sudo] [--print]
+# omaniri:examples=omaniri debug --print --no-sudo
+# omaniri:requires-sudo=true
+
+NO_SUDO=false
+PRINT_ONLY=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-sudo)
+      NO_SUDO=true
+      shift
+      ;;
+    --print)
+      PRINT_ONLY=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      echo "Usage: omaniri-debug [--no-sudo] [--print]"
+      exit 1
+      ;;
+  esac
+done
+
+LOG_FILE="/tmp/omaniri-debug.log"
+
+# dmesg handling
+if [[ "$NO_SUDO" == true ]]; then
+  DMESG_OUTPUT="(skipped - --no-sudo flag used)"
+else
+  DMESG_OUTPUT="$(sudo dmesg 2>/dev/null || echo "Failed to run dmesg")"
+fi
+
+# package list (safe + simplified)
+PACKAGES="$(pacman -Q 2>/dev/null || echo "Failed to get package list")"
+
+# system info
+INXI_OUTPUT="$(inxi -Farz 2>/dev/null || echo "inxi not available")"
+
+# journal (errors + warnings)
+JOURNAL_OUTPUT="$(journalctl -b -p 4..1 2>/dev/null || echo "journalctl not available")"
+
+cat > "$LOG_FILE" <<EOF
+Date: $(date)
+Hostname: $(hostname)
+omaniri Branch: $(git -C "$OMANIRI_PATH" branch --show-current 2>/dev/null || echo "unknown")
+
+=========================================
+SYSTEM INFORMATION
+=========================================
+$INXI_OUTPUT
+
+=========================================
+DMESG
+=========================================
+$DMESG_OUTPUT
+
+=========================================
+JOURNALCTL (CURRENT BOOT, WARNINGS+ERRORS)
+=========================================
+$JOURNAL_OUTPUT
+
+=========================================
+INSTALLED PACKAGES
+=========================================
+$PACKAGES
+EOF
+
+# print-only mode
+if [[ "$PRINT_ONLY" == true ]]; then
+  cat "$LOG_FILE"
+  exit 0
+fi
+
+ACTION=$(gum choose "Upload log" "View log" "Save in current directory")
+
+case "$ACTION" in
+  "Upload log")
+    echo "Uploading debug log..."
+    URL="$(omaniri-paste <"$LOG_FILE")"
+    echo ""
+    echo "✓ Log uploaded successfully!"
+    echo "Share this URL:"
+    echo ""
+    echo "  $URL"
+    echo ""
+    ;;
+
+  "View log")
+    less "$LOG_FILE"
+    ;;
+
+  "Save in current directory")
+    cp "$LOG_FILE" "./omaniri-debug.log"
+    echo "✓ Log saved to $(pwd)/omaniri-debug.log"
+    ;;
+esac

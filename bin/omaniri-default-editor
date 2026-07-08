@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# omaniri:summary=Set the default editor for $EDITOR
+# omaniri:args=[code|cursor|zed|sublime_text|helix|vim|emacs|nvim]
+# omaniri:examples=omaniri default editor | omaniri default editor code | omaniri default editor helix
+
+DEFAULT_EDITOR_FILE="$HOME/.config/omaniri/default-editor"
+
+if (($# == 0)); then
+  if [[ -f $DEFAULT_EDITOR_FILE ]]; then
+    head -n 1 "$DEFAULT_EDITOR_FILE"
+  fi
+  exit 0
+fi
+
+case "$1" in
+code) editor="code"; name="VSCode"; glyph="" ;;
+cursor) editor="cursor"; name="Cursor"; glyph="" ;;
+zed | zeditor) editor="zeditor"; name="Zed"; glyph="" ;;
+sublime_text) editor="sublime_text"; name="Sublime Text"; glyph="" ;;
+helix) editor="helix"; name="Helix"; glyph="" ;;
+vim) editor="vim"; name="Vim"; glyph="" ;;
+emacs) editor="emacs"; name="Emacs"; glyph="" ;;
+nvim) editor="nvim"; name="Neovim"; glyph="" ;;
+*)
+  echo "Usage: omaniri-default-editor <code|cursor|zed|sublime_text|helix|vim|emacs|nvim>"
+  exit 1
+  ;;
+esac
+
+mkdir -p "$(dirname "$DEFAULT_EDITOR_FILE")"
+echo "$editor" > "$DEFAULT_EDITOR_FILE"
+
+export EDITOR="$editor"
+notify-send -u low "$glyph    $name is now the default editor" "      Effective after logging out"

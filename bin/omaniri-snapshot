@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# omaniri:summary=Create or restore system snapshots with snapper
+# omaniri:args=<create|restore>
+# omaniri:requires-sudo=true
+
+set -e
+
+COMMAND="$1"
+OMANIRI_PATH=${OMANIRI_PATH:-$HOME/.local/share/omaniri}
+
+if [[ -z $COMMAND ]]; then
+  echo "Usage: omaniri-snapshot <create|restore>" >&2
+  exit 1
+fi
+
+if ! command -v snapper &>/dev/null; then
+  exit 127 # omaniri-update can use this to just ignore if snapper is not available
+fi
+
+case "$COMMAND" in
+create)
+  DESC="$(uname -a | grep -oE '[0-9]+\.[0-9]+\.[0-9]+-[a-zA-Z0-9.-]+')"
+
+  echo -e "\e[32mCreate system snapshot\e[0m"
+
+  # Get existing snapper config names from CSV output
+  mapfile -t CONFIGS < <(sudo snapper --csvout list-configs | awk -F, 'NR>1 {print $1}')
+
+  for config in "${CONFIGS[@]}"; do
+    sudo snapper -c "$config" create -c number -d "$DESC"
+    sudo snapper -c "$config" cleanup number
+  done
+  echo
+  ;;
+restore)
+  sudo limine-snapper-restore
+  ;;
+esac

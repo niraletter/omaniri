@@ -1,0 +1,38 @@
+# Niri IPC helpers for omaniri scripts (source this file, do not execute).
+
+omaniri_niri_running() {
+  omaniri-cmd-present niri && pgrep -x niri >/dev/null 2>&1
+}
+
+omaniri_niri_reload_config() {
+  omaniri-cmd-present niri || return 0
+  niri msg action load-config-file >/dev/null 2>&1 || true
+}
+
+omaniri_niri_focused_output_name() {
+  niri msg -j focused-output 2>/dev/null | jq -r '
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then .name else .[0].name end)
+  '
+}
+
+omaniri_niri_outputs_json() {
+  niri msg -j outputs 2>/dev/null | jq -c '
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
+  '
+}
+
+omaniri_niri_windows_json() {
+  niri msg -j windows 2>/dev/null | jq -c '
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
+  '
+}
+
+omaniri_niri_focused_window_json() {
+  niri msg -j focused-window 2>/dev/null | jq -c '
+    (if type == "object" and has("Ok") then .Ok else . end | if type == "object" then . else .[0] end)
+  '
+}
+
+omaniri_niri_focused_workspace_id() {
+  omaniri_niri_focused_window_json | jq -r '.workspace_id // empty'
+}

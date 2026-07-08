@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Wrapper for swayosd-client that targets the currently focused monitor.
+# omaniri:args=<swayosd-client-args...>
+
+exec swayosd-client --monitor "$(omaniri-niri-monitor-focused)" "$@"

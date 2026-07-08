@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Launch the default editor as determined by $EDITOR (set via ~/.config/omaniri/default-editor) (or nvim if missing).
+# omaniri:args=<path>
+
+omaniri-cmd-present "$EDITOR" || EDITOR=nvim
+
+case "$EDITOR" in
+nvim | vim | nano | micro | hx | helix | fresh)
+  exec omaniri-launch-tui "$EDITOR" "$@"
+  ;;
+*)
+  exec setsid "$EDITOR" "$@"
+  ;;
+esac

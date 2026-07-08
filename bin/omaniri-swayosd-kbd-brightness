@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Display keyboard brightness level using SwayOSD on the current monitor.
+# omaniri:args=<0-100>
+# omaniri:examples=omaniri swayosd kbd brightness 0 | omaniri swayosd kbd brightness 50 | omaniri swayosd kbd brightness 100
+
+percent="$1"
+
+progress="$(awk -v p="$percent" 'BEGIN{printf "%.2f", p/100}')"
+[[ $progress == "0.00" ]] && progress="0.01"
+
+omaniri-swayosd-client \
+  --custom-icon keyboard-brightness-symbolic \
+  --custom-progress "$progress" \
+  --custom-progress-text "${percent}%"

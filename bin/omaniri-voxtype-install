@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# omaniri:summary=Install and configure Voxtype dictation
+# omaniri:requires-sudo=true
+
+set -e
+
+# Install voxtype and configure it for use.
+
+if gum confirm "Install Voxtype + AI model (~150MB) to enable dictation?"; then
+  omaniri-pkg-add wtype voxtype-bin
+
+  # Setup voxtype
+  mkdir -p ~/.config/voxtype
+  cp $OMANIRI_PATH/default/voxtype/config.toml ~/.config/voxtype/
+
+  voxtype setup --download --no-post-install
+  if omaniri-hw-vulkan; then
+    voxtype setup gpu --enable || true
+  fi
+  voxtype setup systemd
+
+  omaniri-restart-waybar
+  notify-send " Voxtype Dictation Ready" $'Push-to-talk: hold Caps Lock to start dictation.\nToggle mode: Super + Ctrl + X.' -t 10000
+fi

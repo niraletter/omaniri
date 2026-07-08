@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# omaniri:summary=Adjust brightness on the most likely display device.
+# omaniri:args=<+N%|N%-|N%|off|on>
+# omaniri:examples=omaniri brightness display +5% | omaniri brightness display 5%- | omaniri brightness display 50% | omaniri brightness display off | omaniri brightness display on
+
+step="${1:-+5%}"
+
+device="$(ls -1 /sys/class/backlight 2>/dev/null | head -n1)"
+for candidate in amdgpu_bl* intel_backlight acpi_video*; do
+  if [[ -e /sys/class/backlight/$candidate ]]; then
+    device="$candidate"
+    break
+  fi
+done
+
+if [[ $step == "off" ]]; then
+  omaniri-cmd-present niri && niri msg action power-off-monitors >/dev/null 2>&1 || true
+  exit 0
+elif [[ $step == "on" ]]; then
+  omaniri-cmd-present niri && niri msg action power-on-monitors >/dev/null 2>&1 || true
+  exit 0
+fi
+
+current=$(brightnessctl -d "$device" -m | cut -d',' -f4 | tr -d '%')
+
+if [[ $step == "+5%" ]]; then
+  if (( current < 5 )); then
+    (( target = current + 1 ))
+  else
+    (( target = current + 5 ))
+  fi
+  (( target > 100 )) && target=100
+  step="$target%"
+elif [[ $step == "5%-" ]]; then
+  if (( current <= 5 )); then
+    (( target = current - 1 ))
+  else
+    (( target = current - 5 ))
+  fi
+  (( target < 1 )) && target=1
+  step="$target%"
+fi
+
+brightnessctl -d "$device" set "$step" >/dev/null
+omaniri-swayosd-brightness "$(brightnessctl -d "$device" -m | cut -d',' -f4 | tr -d '%')"

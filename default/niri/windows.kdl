@@ -1,0 +1,17 @@
+// Ignore maximize requests from clients (Hypr: suppress_event maximize)
+window-rule {
+    open-maximized false
+}
+
+// Default window opacity (app rules below override this)
+window-rule {
+    match is-active=true
+    opacity 0.97
+}
+window-rule {
+    match is-active=false
+    opacity 0.9
+}
+
+// App-specific tweaks
+include "~/.local/share/omaniri/default/niri/apps.kdl"

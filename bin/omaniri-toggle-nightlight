@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle nightlight screen temperature
+# omaniri:examples=omaniri toggle nightlight
+
+ON_TEMP=4000
+OFF_TEMP=6000
+
+if ! pgrep -x hyprsunset >/dev/null; then
+  setsid hyprsunset >/dev/null 2>&1 &
+  sleep 1
+fi
+
+CURRENT_TEMP=$(hyprctl hyprsunset temperature 2>/dev/null | grep -oE '[0-9]+')
+
+restart_nightlighted_waybar() {
+  if grep -q "custom/nightlight" ~/.config/waybar/config.jsonc 2>/dev/null; then
+    omaniri-restart-waybar
+  fi
+}
+
+if [[ $CURRENT_TEMP == $OFF_TEMP ]]; then
+  hyprctl hyprsunset temperature $ON_TEMP
+  notify-send -u low "  Nightlight screen temperature"
+  restart_nightlighted_waybar
+else
+  hyprctl hyprsunset temperature $OFF_TEMP
+  notify-send -u low "   Daylight screen temperature"
+  restart_nightlighted_waybar
+fi

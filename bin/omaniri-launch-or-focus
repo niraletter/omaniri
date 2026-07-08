@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# omaniri:summary=Launch an app or focus an existing window matching a pattern
+# omaniri:args=<window-pattern> <launch-command>
+
+if (($# == 0)); then
+  echo "Usage: omaniri-launch-or-focus [window-pattern] [launch-command]"
+  exit 1
+fi
+
+WINDOW_PATTERN="$1"
+LAUNCH_COMMAND="${2:-$WINDOW_PATTERN}"
+
+WINDOW_ID=$(niri msg -j windows 2>/dev/null | jq -r --arg p "$WINDOW_PATTERN" '
+  (if type == "object" and has("Ok") then .Ok else . end | if type == "array" then . else [.] end)
+  | .[]
+  | select(
+      ((.app_id // "") | test("\\b" + $p + "\\b"; "i"))
+      or ((.title // "") | test("\\b" + $p + "\\b"; "i"))
+    )
+  | .id
+  ' | head -n1)
+
+if [[ -n $WINDOW_ID ]]; then
+  niri msg action focus-window "$WINDOW_ID" >/dev/null 2>&1
+else
+  eval exec setsid $LAUNCH_COMMAND
+fi

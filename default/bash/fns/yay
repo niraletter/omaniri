@@ -1,0 +1,38 @@
+# yay wrapper: update system, clean orphans, reboot prompt
+# Without args: full update + cleanup + reboot prompt
+# With args: pass through to yay binary (e.g. yay -S package)
+yay() {
+  if (( $# > 0 )); then
+    command yay "$@"
+    return $?
+  fi
+
+  if ! omaniri-snapshot create; then
+    echo -e "\e[31mSnapshot creation failed. Aborting update.\e[0m"
+    return 1
+  fi
+
+  echo -e "\e[32mUpdating system...\e[0m"
+  echo
+  command yay -Syu --noconfirm
+  status=$?
+
+  if (( status != 0 )); then
+    echo -e "\e[31mUpdate cancelled or failed.\e[0m"
+    return $status
+  fi
+
+  orphans=$(pacman -Qtdq 2>/dev/null || true)
+
+  if [[ -n $orphans ]]; then
+    sudo pacman -Rns --noconfirm $orphans
+    echo -e "\n\e[33mRemoved orphan package(s)\e[0m"
+  else
+    echo -e "\n\e[33mNo orphan packages found\e[0m"
+  fi
+
+  echo -e "\n\e[32mUpdate complete. Reboot now?\e[0m"
+  if gum confirm --default=false ""; then
+    sudo reboot
+  fi
+}

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# omaniri:summary=Update system and AUR packages via yay, then clean orphans and prompt reboot
+# omaniri:args=[-y]
+# omaniri:examples=omaniri update | omaniri update -y
+# omaniri:requires-sudo=true
+
+set -e
+
+if [[ -z $OMANIRI_UPDATE_LOGGED ]]; then
+  script_command=$(printf '%q ' "$0" "$@")
+  exec env OMANIRI_UPDATE_LOGGED=1 script -qefc "$script_command" "/tmp/omaniri-update.log"
+fi
+
+trap 'echo ""; echo -e "\033[0;31mSomething went wrong during the update!\n\nPlease review the output above carefully, correct the error, and retry the update.\033[0m"' ERR
+
+if [[ $1 == "-y" ]] || omaniri-update-confirm; then
+  omaniri-snapshot create || (($? == 127))
+  omaniri-update-git
+
+  echo -e "\e[32mUpdating system...\e[0m"
+  /usr/bin/yay -Syu --noconfirm
+
+  orphans=$(pacman -Qtdq 2>/dev/null || true)
+  if [[ -n $orphans ]]; then
+    sudo pacman -Rns --noconfirm $orphans
+    echo -e "\n\e[33mRemoved orphan package(s)\e[0m"
+  else
+    echo -e "\n\e[33mNo orphan packages found\e[0m"
+  fi
+
+  echo -e "\n\e[32mUpdate complete. Reboot now?\e[0m"
+  if gum confirm --default=false ""; then
+    sudo reboot
+  fi
+fi

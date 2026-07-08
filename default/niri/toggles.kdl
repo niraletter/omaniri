@@ -1,0 +1,2 @@
+// Runtime toggles (monitor off, touchpad off, scale overrides, etc.)
+include optional=true "~/.local/state/omaniri/toggles/niri/_includes.kdl"

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Toggles the window gaps globally between no gaps and the default.
+# omaniri:group=niri
+
+omaniri-niri-toggle window-no-gaps

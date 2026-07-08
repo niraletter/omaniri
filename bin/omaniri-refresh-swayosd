@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite the user configs for swayosd (controls on-screen feedback for changing volume/songs etc) with the omaniri defaults and restart the service.
+
+omaniri-refresh-config swayosd/config.toml
+omaniri-refresh-config swayosd/style.css
+omaniri-restart-swayosd

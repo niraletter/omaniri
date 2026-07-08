@@ -1,0 +1,6 @@
+source ~/.local/share/omaniri/default/bash/envs
+source ~/.local/share/omaniri/default/bash/shell
+source ~/.local/share/omaniri/default/bash/aliases
+source ~/.local/share/omaniri/default/bash/functions
+source ~/.local/share/omaniri/default/bash/init
+[[ $- == *i* ]] && bind -f ~/.local/share/omaniri/default/bash/inputrc

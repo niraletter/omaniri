@@ -1,0 +1,8 @@
+// Universal copy/paste/cut: synthesize Ctrl+Insert, Shift+Insert, Ctrl+X for the
+// focused window (terminals, many GTK apps, etc.). Requires `wtype` on PATH.
+binds {
+  Mod+C hotkey-overlay-title="Universal copy" { spawn "wtype" "-M" "ctrl" "-k" "Insert"; }
+  Mod+V hotkey-overlay-title="Universal paste" { spawn "wtype" "-M" "shift" "-k" "Insert"; }
+  Mod+X hotkey-overlay-title="Universal cut" { spawn "wtype" "-M" "ctrl" "-k" "x"; }
+  Mod+Ctrl+V hotkey-overlay-title="Clipboard manager" { spawn "omaniri-launch-walker" "-m" "clipboard"; }
+}

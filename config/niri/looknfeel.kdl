@@ -1,0 +1,53 @@
+include "~/.config/omaniri/current/theme/niri.kdl"
+
+layout {
+    gaps 2
+    center-focused-column "never"
+    background-color "transparent"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        off
+    }
+
+    border {
+        on
+        width 1.5
+    }
+}
+
+overview {
+    backdrop-color "transparent"
+}
+
+recent-windows {
+    highlight {
+        padding 20
+    }
+}
+
+layer-rule {
+    match namespace="^wallpaper$"
+    place-within-backdrop true
+}
+
+layer-rule {
+    match namespace="waybar"
+    opacity 0.99
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+prefer-no-csd
+
+// Screenshots
+screenshot-path "~/Pictures/%Y-%m-%d %H-%M-%S.png"
