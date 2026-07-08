@@ -4,7 +4,6 @@
 alacritty
 apple_cursor
 alsa-utils
-asdcontrol
 avahi
 bash-completion
 bat
@@ -15,7 +14,6 @@ brightnessctl
 btop
 cliamp-bin
 clang
-cliamp
 discord
 docker
 docker-buildx
@@ -111,7 +109,6 @@ satty
 slurp
 socat
 starship
-surge-bin
 sushi
 swaybg
 swayosd
@@ -144,5 +141,4 @@ xdg-terminal-exec
 xmlstarlet
 xwayland-satellite
 yaru-icon-theme
-yay
 zoxide
