@@ -10,22 +10,22 @@ EOF
   [[ -d /sys/firmware/efi ]] && EFI=true
 
   # Find config location
-  if [[ -f /boot/EFI/arch-limine/limine.conf ]]; then
+  if sudo test -f /boot/EFI/arch-limine/limine.conf; then
     limine_config="/boot/EFI/arch-limine/limine.conf"
-  elif [[ -f /boot/EFI/BOOT/limine.conf ]]; then
+  elif sudo test -f /boot/EFI/BOOT/limine.conf; then
     limine_config="/boot/EFI/BOOT/limine.conf"
-  elif [[ -f /boot/EFI/limine/limine.conf ]]; then
+  elif sudo test -f /boot/EFI/limine/limine.conf; then
     limine_config="/boot/EFI/limine/limine.conf"
-  elif [[ -f /boot/limine/limine.conf ]]; then
+  elif sudo test -f /boot/limine/limine.conf; then
     limine_config="/boot/limine/limine.conf"
-  elif [[ -f /boot/limine.conf ]]; then
+  elif sudo test -f /boot/limine.conf; then
     limine_config="/boot/limine.conf"
   else
     echo "Error: Limine config not found" >&2
     exit 1
   fi
 
-  CMDLINE=$(grep "^[[:space:]]*cmdline:" "$limine_config" | head -1 | sed 's/^[[:space:]]*cmdline:[[:space:]]*//')
+  CMDLINE=$(sudo grep "^[[:space:]]*cmdline:" "$limine_config" | head -1 | sed 's/^[[:space:]]*cmdline:[[:space:]]*//')
 
   # Write /etc/default/limine *before* installing limine-mkinitcpio-hook, whose
   # post-transaction deploy hook runs limine-install and reads this file. Without
@@ -46,7 +46,7 @@ EOF
 
   # Remove the original config file if it's not /boot/limine.conf, so the deploy
   # hook doesn't see conflicting configs on the same ESP.
-  if [[ $limine_config != "/boot/limine.conf" ]] && [[ -f $limine_config ]]; then
+  if [[ $limine_config != "/boot/limine.conf" ]] && sudo test -f "$limine_config"; then
     sudo rm "$limine_config"
   fi
 
@@ -85,11 +85,11 @@ echo "mkinitcpio hooks re-enabled"
 # boot entries into /boot/limine.conf. Only fall back to limine-update if those
 # hooks didn't run for some reason — running it unconditionally rebuilds every
 # UKI a second time.
-if ! grep -q "^/+" /boot/limine.conf; then
+if ! sudo grep -q "^/+" /boot/limine.conf; then
   sudo limine-update
 fi
 
-if ! grep -q "^/+" /boot/limine.conf; then
+if ! sudo grep -q "^/+" /boot/limine.conf; then
   echo "Error: failed to add boot entries to /boot/limine.conf" >&2
   exit 1
 fi
