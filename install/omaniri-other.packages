@@ -40,8 +40,6 @@ sof-firmware
 thermald
 webp-pixbuf-loader
 yay-bin
-tuxedo-drivers-nocompatcheck-dkms
-yt6801-dkms
 zram-generator
 
 # Intel encoding processing
