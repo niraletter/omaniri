@@ -16,4 +16,8 @@ if [[ -n ${OMANIRI_ONLINE_INSTALL:-} ]]; then
 
   # Refresh all repos
   sudo pacman -Syyuu --noconfirm
-fi  
+else
+  # Offline ISO install: sync the [offline] mirror database so pacman -Si/-S
+  # can resolve the pre-built packages inside the chroot.
+  sudo pacman -Sy
+fi
