@@ -5,13 +5,16 @@
 # omaniri:examples=omaniri pkg add jq ripgrep
 # omaniri:requires-sudo=true
 
+CHAOTIC_ONLY=(yaru-icon-theme asusctl)
+
 if (($# == 0)); then
   exit 0
 fi
 
-pkg_in_official_repos() {
-  pacman -Si "$1" &>/dev/null
-}
+cp /etc/pacman.conf /etc/pacman.conf.omaniri-bak
+trap 'cp /etc/pacman.conf.omaniri-bak /etc/pacman.conf' EXIT
+
+chaotic_off() { sed -i '/^\[chaotic-aur\]/,/^Include/d' /etc/pacman.conf; }
 
 pacman_pkgs=()
 aur_pkgs=()
@@ -21,10 +24,35 @@ for pkg in "$@"; do
     continue
   fi
 
-  if pkg_in_official_repos "$pkg"; then
+  is_whitelisted=false
+  for w in "${CHAOTIC_ONLY[@]}"; do
+    [[ "$pkg" == "$w" ]] && is_whitelisted=true && break
+  done
+
+  output=$(pacman -Si "$pkg" 2>/dev/null)
+
+  if $is_whitelisted; then
+    if [[ -z "$output" ]]; then
+      echo -e "\033[31mError: $pkg not found in any repo\033[0m" >&2
+      exit 1
+    fi
+    repo=$(echo "$output" | sed -n 's/^Repository\s*:\s*//p')
+    if [[ "$repo" != "chaotic-aur" ]]; then
+      echo -e "\033[31mError: $pkg must be in Chaotic-AUR, found in $repo\033[0m" >&2
+      exit 1
+    fi
     pacman_pkgs+=("$pkg")
   else
-    aur_pkgs+=("$pkg")
+    if [[ -z "$output" ]]; then
+      aur_pkgs+=("$pkg")
+    else
+      repo=$(echo "$output" | sed -n 's/^Repository\s*:\s*//p')
+      if [[ "$repo" == "chaotic-aur" ]]; then
+        aur_pkgs+=("$pkg")
+      else
+        pacman_pkgs+=("$pkg")
+      fi
+    fi
   fi
 done
 
@@ -32,6 +60,7 @@ if ((${#pacman_pkgs[@]} > 0)); then
   sudo pacman -S --noconfirm --needed "${pacman_pkgs[@]}" || exit 1
 fi
 
+chaotic_off
 if ((${#aur_pkgs[@]} > 0)); then
   yay -S --noconfirm --needed "${aur_pkgs[@]}" || exit 1
 fi
