@@ -11,10 +11,10 @@ if (($# == 0)); then
   exit 0
 fi
 
-cp /etc/pacman.conf /etc/pacman.conf.omaniri-bak
-trap 'cp /etc/pacman.conf.omaniri-bak /etc/pacman.conf' EXIT
+sudo cp /etc/pacman.conf /etc/pacman.conf.omaniri-bak
+trap 'sudo cp /etc/pacman.conf.omaniri-bak /etc/pacman.conf' EXIT
 
-chaotic_off() { sed -i '/^\[chaotic-aur\]/,/^Include/d' /etc/pacman.conf; }
+chaotic_off() { sudo sed -i '/^\[chaotic-aur\]/,/^Include/d' /etc/pacman.conf; }
 
 pacman_pkgs=()
 aur_pkgs=()
