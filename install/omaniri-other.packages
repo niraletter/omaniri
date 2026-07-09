@@ -13,23 +13,17 @@ gst-plugin-pipewire
 gtk4-layer-shell
 jdk-openjdk
 libpulse
-intel-ipu7-camera
 intel-lpmd
 intel-media-driver
 libva-intel-driver
 libva-nvidia-driver
 limine
-limine-mkinitcpio-hook
-limine-snapper-sync
 linux
 linux-firmware
 linux-headers
-nvidia-580xx-dkms
 nvidia-dkms
 nvidia-open-dkms
-nvidia-580xx-utils
 nvidia-utils
-lib32-nvidia-580xx-utils
 pipewire
 pipewire-alsa
 pipewire-jack
@@ -39,9 +33,6 @@ snapper
 sof-firmware
 thermald
 webp-pixbuf-loader
-yay-debug
-tuxedo-drivers-nocompatcheck-dkms
-yt6801-dkms
 zram-generator
 
 # Intel encoding processing
