@@ -10,7 +10,7 @@ sudo mkdir -p /etc/opt/chrome/policies/managed
 sudo chmod a+rw /etc/opt/chrome/policies/managed
 
 # Set initial theme
-omaniri-theme-set "Tokyo Night"
+omaniri-theme-set "Catppuccin"
 rm -rf ~/.config/google-chrome/SingletonLock # otherwise archiso will own the Google chrome singleton
 
 # Set specific app links for current theme
