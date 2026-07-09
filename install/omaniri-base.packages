@@ -29,14 +29,12 @@ elephant-desktopapplications
 elephant-providerlist
 elephant-menus
 expac
-eza
 fastfetch
 fd
 ffmpegthumbnailer
 foot
 fontconfig
 fzf
-gdu
 github-cli
 gnome-calculator
 gnome-keyring
@@ -86,6 +84,7 @@ gnome-disk-utility
 noto-fonts
 noto-fonts-cjk
 noto-fonts-emoji
+ncdu
 nvtop
 nss-mdns
 opencode
