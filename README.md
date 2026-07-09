@@ -20,7 +20,7 @@ curl -fsSL https://niraletter.github.io/omaniri | bash
 
 If you cannot use the ISO, see the [Manual Installation Guide](docs/manual-installation.md).
 
-## What It Sets Up
+## What Omaniri includes
 
 Omaniri configures a ready-to-use Arch desktop centered on `niri`, with the login, boot, snapshot, theming, and core app stack handled for you.
 
