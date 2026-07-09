@@ -126,6 +126,10 @@ catch_errors() {
 exit_handler() {
   local exit_code=$?
 
+  if declare -F omaniri_sudo_keepalive_stop >/dev/null; then
+    omaniri_sudo_keepalive_stop
+  fi
+
   # Only run if we're exiting with an error and haven't already handled it
   if (( exit_code != 0 )) && [[ $ERROR_HANDLING != "true" ]]; then
     catch_errors

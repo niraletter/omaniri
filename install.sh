@@ -9,8 +9,6 @@ export OMANIRI_INSTALL="$OMANIRI_PATH/install"
 export OMANIRI_INSTALL_LOG_FILE="/var/log/omaniri-install.log"
 export PATH="$OMANIRI_PATH/bin:$PATH"
 
-# Keep sudo alive for the whole install so run_logged
-# steps don't fail asking for a password.
 source "$OMANIRI_PATH/bin/omaniri-sudo-keepalive"
 
 # Install

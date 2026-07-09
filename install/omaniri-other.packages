@@ -14,7 +14,6 @@ gst-plugin-pipewire
 gtk4-layer-shell
 jdk-openjdk
 libpulse
-intel-ipu7-camera
 intel-lpmd
 intel-media-driver
 libva-intel-driver
@@ -25,10 +24,7 @@ limine-snapper-sync
 linux
 linux-firmware
 linux-headers
-linux-ptl
-linux-ptl-headers
 nvidia-580xx-dkms
-nvidia-dkms
 nvidia-open-dkms
 nvidia-580xx-utils
 nvidia-utils
@@ -43,7 +39,7 @@ snapper
 sof-firmware
 thermald
 webp-pixbuf-loader
-yay-debug
+yay-bin
 tuxedo-drivers-nocompatcheck-dkms
 yt6801-dkms
 zram-generator
@@ -58,4 +54,3 @@ vulkan-radeon
 
 # Surface laptop support packages
 linux-firmware-marvell
-

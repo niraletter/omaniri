@@ -7,7 +7,6 @@ alsa-utils
 avahi
 bash-completion
 bat
-battop-bin
 bluetui
 bolt
 brightnessctl
@@ -29,7 +28,6 @@ elephant-desktopapplications
 elephant-providerlist
 elephant-menus
 expac
-eza
 fastfetch
 fd
 ffmpegthumbnailer
@@ -79,6 +77,7 @@ man-db
 mariadb-libs
 mise
 mpv
+nano
 niri
 nautilus
 nautilus-python
@@ -140,4 +139,7 @@ xdg-terminal-exec
 xmlstarlet
 xwayland-satellite
 yaru-icon-theme
+zed
 zoxide
+vim
+

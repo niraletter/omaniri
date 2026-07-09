@@ -16,7 +16,6 @@ if [[ -f $FIRST_RUN_MODE ]]; then
   bash "$OMANIRI_PATH/install/first-run/dns-resolver.sh"
   bash "$OMANIRI_PATH/install/first-run/asusd.sh"
   bash "$OMANIRI_PATH/install/first-run/gnome-theme.sh"
-  bash "$OMANIRI_PATH/install/first-run/omazed.sh"
   bash "$OMANIRI_PATH/install/first-run/swayosd.sh"
   bash "$OMANIRI_PATH/install/first-run/tldr.sh"
   bash "$OMANIRI_PATH/install/first-run/swayosd.sh"

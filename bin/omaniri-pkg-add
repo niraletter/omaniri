@@ -13,7 +13,29 @@ pkg_in_official_repos() {
   pacman -Si "$1" &>/dev/null
 }
 
+pkg_in_chaotic_packages() {
+  local package_list="${OMANIRI_PATH:-$HOME/.local/share/omaniri}/install/omaniri-chaotic.packages"
+  [[ -f $package_list ]] && grep -Fxq "$1" "$package_list"
+}
+
+install_chaotic_packages() {
+  local pacman_conf status
+  pacman_conf=$(mktemp)
+  cp /etc/pacman.conf "$pacman_conf"
+  cat <<'EOF' >>"$pacman_conf"
+
+[chaotic-aur]
+SigLevel = Never
+Server = https://geo-mirror.chaotic.cx/$repo/$arch
+EOF
+  sudo pacman --config "$pacman_conf" -Sy --noconfirm --needed "$@"
+  status=$?
+  rm -f "$pacman_conf"
+  return "$status"
+}
+
 pacman_pkgs=()
+chaotic_pkgs=()
 aur_pkgs=()
 
 for pkg in "$@"; do
@@ -23,6 +45,8 @@ for pkg in "$@"; do
 
   if pkg_in_official_repos "$pkg"; then
     pacman_pkgs+=("$pkg")
+  elif pkg_in_chaotic_packages "$pkg"; then
+    chaotic_pkgs+=("$pkg")
   else
     aur_pkgs+=("$pkg")
   fi
@@ -30,6 +54,10 @@ done
 
 if ((${#pacman_pkgs[@]} > 0)); then
   sudo pacman -S --noconfirm --needed "${pacman_pkgs[@]}" || exit 1
+fi
+
+if ((${#chaotic_pkgs[@]} > 0)); then
+  install_chaotic_packages "${chaotic_pkgs[@]}" || exit 1
 fi
 
 if ((${#aur_pkgs[@]} > 0)); then
