@@ -19,7 +19,6 @@ limine-snapper-sync
 localsend-bin
 nvidia-580xx-dkms
 nvidia-580xx-utils
-opencode
 python-terminaltexteffects
 tuxedo-drivers-nocompatcheck-dkms
 tzupdate
