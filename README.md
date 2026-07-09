@@ -10,28 +10,25 @@
 An opinionated Arch Linux desktop built around the <a href="https://github.com/YaLTeR/niri">niri</a> scrollable-tiling Wayland compositor.
 </p>
 
-Omaniri turns a fresh Arch Linux install into a complete Wayland desktop with niri, greetd, Waybar, Walker, themed application defaults, hardware-specific setup, and the `omaniri` command-line tools for managing the system after install.
-
 ## Install
 
-The recommended path is the [Omaniri ISO](https://github.com/niraletter/omaniri-iso/releases). It boots into the Omaniri configurator, installs Arch, and then runs this installer.
-
-If you already have a fresh Arch install, run:
+Use the [Omaniri ISO](https://github.com/niraletter/omaniri-iso/releases) for a guided install. On an existing Arch Linux install, run:
 
 ```bash
 curl -fsSL https://niraletter.github.io/omaniri | bash
 ```
 
-See [Manual Installation](docs/manual-installation.md) if you cannot use the ISO.
+If you cannot use the ISO, see the [Manual Installation Guide](docs/manual-installation.md).
 
 ## What It Sets Up
+
+Omaniri configures a ready-to-use Arch desktop centered on `niri`, with the login, boot, snapshot, theming, and core app stack handled for you.
 
 - `niri` as the main Wayland compositor
 - greetd login, Plymouth boot theme, Limine bootloader integration, and Snapper support
 - Waybar, Walker, mako, hyprlock, hypridle, terminals, browser, editor, media, screenshot, and system utilities
 - Omaniri themes and generated app configs
-- GPU, laptop, ASUS, Surface, audio, Bluetooth, Docker, firewall, and power-related setup where applicable
-- Package installation from official Arch repos, selected Chaotic-AUR packages, and AUR packages through `yay`
+- Hardware-aware setup for supported GPUs, laptops, ASUS systems, Surface devices, audio, Bluetooth, Docker, firewall, and power management
 
 ## Requirements
 
