@@ -12,15 +12,20 @@ An opinionated Arch Linux desktop built around the <a href="https://github.com/Y
 
 ## Install
 
-Use the [Omaniri ISO](https://github.com/niraletter/omaniri-iso/releases) for a guided install. On an existing Arch Linux install, run:
+The recommended path is the [Omaniri ISO](https://github.com/niraletter/omaniri-iso/releases). It boots into the Omaniri configurator, installs Arch, and then runs this installer.
+
+To install Omaniri on a fresh Arch Linux installation, run:
 
 ```bash
 curl -fsSL https://niraletter.github.io/omaniri | bash
 ```
 
-If you cannot use the ISO, see the [Manual Installation Guide](docs/manual-installation.md).
+If you cannot use the Omaniri ISO, follow the [Manual Installation Guide](docs/manual-installation.md) to install with the standard Arch Linux ISO and `archinstall`.
 
-## What Omaniri includes
+> [!WARNING]
+> Only use the manual installation method if you know what you're doing.
+
+## What Omaniri Includes
 
 Omaniri configures a ready-to-use Arch desktop centered on `niri`, with the login, boot, snapshot, theming, and core app stack handled for you.
 
