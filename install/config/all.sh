@@ -37,7 +37,6 @@ run_logged $OMANIRI_INSTALL/config/plocate-ac-only.sh
 run_logged $OMANIRI_INSTALL/config/hardware/network.sh
 run_logged $OMANIRI_INSTALL/config/hardware/fix-surface-keyboard.sh
 run_logged $OMANIRI_INSTALL/config/hardware/fix-synaptic-touchpad.sh
-run_logged $OMANIRI_INSTALL/config/hardware/fix-tuxedo-backlight.sh
 run_logged $OMANIRI_INSTALL/config/hardware/set-wireless-regdom.sh
 run_logged $OMANIRI_INSTALL/config/hardware/bluetooth.sh
 run_logged $OMANIRI_INSTALL/config/hardware/usb-autosuspend.sh
