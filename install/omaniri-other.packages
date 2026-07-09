@@ -24,8 +24,6 @@ limine-snapper-sync
 linux
 linux-firmware
 linux-headers
-linux-ptl
-linux-ptl-headers
 nvidia-580xx-dkms
 nvidia-dkms
 nvidia-open-dkms
