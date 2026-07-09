@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Print the installed Omaniri version
+
+cat $OMANIRI_PATH/version
