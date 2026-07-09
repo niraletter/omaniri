@@ -30,4 +30,16 @@ curl -fsSL https://niraletter.github.io/omaniri | bash
 
 It'll first ask you to sudo, then shortly thereafter, it'll ask for your name and email address. Those credentials are used to preconfigure git (`git config --global user.name/email`) and set for auto-expansion. After that, it'll run by itself for 5-30 minutes, depending on the speed of your internet connection. When it's all done, it'll ask for your permission to reboot the system.
 
+The installer prompts for your sudo password at the beginning and keeps that sudo session alive while the install is running, so you should not need to re-enter your password during package installation.
+
+## Package sources
+
+Manual installation needs a working internet connection. Omaniri installs packages in this order:
+
+1. Official Arch repo packages are installed with `pacman`.
+2. Packages listed in `install/omaniri-chaotic.packages` are installed from Chaotic-AUR with a temporary pacman config.
+3. Remaining packages are installed from the AUR with `yay`.
+
+Packages used by the ISO builder follow the same split so the ISO can prebuild and cache them for offline installation.
+
 Now you're ready to Omaniri!
