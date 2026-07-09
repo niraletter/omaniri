@@ -1,0 +1,31 @@
+# AUR-only packages — not available in core, extra, or Chaotic-AUR repos.
+# Built from source by the ISO builder's AUR build loop.
+# Keep sorted alphabetically.
+
+apple_cursor
+battop-bin
+cliamp-bin
+elephant
+elephant-clipboard
+elephant-desktopapplications
+elephant-menus
+elephant-providerlist
+elephant-symbols
+google-chrome
+intel-ipu7-camera
+lib32-nvidia-580xx-utils
+limine-mkinitcpio-hook
+limine-snapper-sync
+localsend-bin
+nvidia-580xx-dkms
+nvidia-580xx-utils
+opencode
+python-terminaltexteffects
+tuxedo-drivers-nocompatcheck-dkms
+tzupdate
+ufw-docker
+walker-bin
+wooz-git
+xdg-terminal-exec
+yay-debug
+yt6801-dkms
