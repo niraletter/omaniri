@@ -11,6 +11,30 @@ if (($# == 0)); then
   exit 0
 fi
 
+# Offline ISO install: every package (official, Chaotic-AUR, and AUR-built) was
+# baked into the [offline] repo at build time, so resolve everything through
+# pacman and never fall back to the AUR/network.
+if pacman-conf --repo-list 2>/dev/null | grep -qx offline; then
+  offline_pkgs=()
+  for pkg in "$@"; do
+    pacman -Q "$pkg" &>/dev/null && continue
+    offline_pkgs+=("$pkg")
+  done
+
+  if ((${#offline_pkgs[@]} > 0)); then
+    sudo pacman -S --noconfirm --needed "${offline_pkgs[@]}" || exit 1
+  fi
+
+  for pkg in "$@"; do
+    if ! pacman -Q "$pkg" &>/dev/null; then
+      echo -e "\033[31mError: Package '$pkg' did not install\033[0m" >&2
+      exit 1
+    fi
+  done
+
+  exit 0
+fi
+
 sudo cp /etc/pacman.conf /etc/pacman.conf.omaniri-bak
 trap 'sudo cp /etc/pacman.conf.omaniri-bak /etc/pacman.conf' EXIT
 
