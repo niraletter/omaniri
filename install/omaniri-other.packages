@@ -12,15 +12,12 @@ egl-wayland
 git
 gst-plugin-pipewire
 gtk4-layer-shell
-jdk-openjdk
 libpulse
 intel-lpmd
 intel-media-driver
 libva-intel-driver
 libva-nvidia-driver
 limine
-limine-mkinitcpio-hook
-limine-snapper-sync
 linux
 linux-firmware
 linux-headers
