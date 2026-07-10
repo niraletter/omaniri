@@ -12,7 +12,6 @@ bolt
 brightnessctl
 btop
 cliamp-bin
-clang
 discord
 docker
 docker-buildx
@@ -102,7 +101,6 @@ python-poetry-core
 python-terminaltexteffects
 qt5-wayland
 ripgrep
-rust
 satty
 slurp
 socat
