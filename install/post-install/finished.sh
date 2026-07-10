@@ -1,12 +1,24 @@
 stop_install_log
 
 echo_in_style() {
-  echo "$1" | tte --canvas-width 0 --anchor-text c --frame-rate 640 print
+  if command -v tte >/dev/null 2>&1; then
+    echo "$1" | tte --canvas-width 0 --anchor-text c --frame-rate 640 print
+  else
+    echo "$1"
+  fi
+}
+
+show_logo() {
+  if command -v tte >/dev/null 2>&1; then
+    tte -i ~/.local/share/omaniri/logo.txt --canvas-width 0 --anchor-text c --frame-rate 920 laseretch
+  else
+    cat ~/.local/share/omaniri/logo.txt
+  fi
 }
 
 clear
 echo
-tte -i ~/.local/share/omaniri/logo.txt --canvas-width 0 --anchor-text c --frame-rate 920 laseretch
+show_logo
 echo
 
 # Display installation time if available
@@ -20,8 +32,8 @@ else
   echo_in_style "Finished installing"
 fi
 
-if sudo test -f /etc/sudoers.d/99-omaniri-installer; then
-  sudo rm -f /etc/sudoers.d/99-omaniri-installer &>/dev/null
+if sudo -n test -f /etc/sudoers.d/99-omaniri-installer 2>/dev/null; then
+  sudo -n rm -f /etc/sudoers.d/99-omaniri-installer &>/dev/null || true
 fi
 
 # Exit gracefully if user chooses not to reboot
@@ -33,6 +45,6 @@ if gum confirm --padding "0 0 0 $((PADDING_LEFT + 32))" --show-help=false --defa
     touch /var/tmp/omaniri-install-completed
     exit 0
   else
-    sudo reboot 2>/dev/null
+    sudo -n reboot 2>/dev/null || reboot 2>/dev/null || true
   fi
 fi
