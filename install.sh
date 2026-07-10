@@ -9,7 +9,9 @@ export OMANIRI_INSTALL="$OMANIRI_PATH/install"
 export OMANIRI_INSTALL_LOG_FILE="/var/log/omaniri-install.log"
 export PATH="$OMANIRI_PATH/bin:$PATH"
 
-source "$OMANIRI_PATH/bin/omaniri-sudo-keepalive"
+if [[ -z "${OMANIRI_CHROOT_INSTALL:-}" ]]; then
+  source "$OMANIRI_PATH/bin/omaniri-sudo-keepalive"
+fi
 
 # Install
 source "$OMANIRI_INSTALL/helpers/all.sh"
