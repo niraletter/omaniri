@@ -4,7 +4,7 @@ echo_in_style() {
   if command -v tte >/dev/null 2>&1; then
     echo "$1" | tte --canvas-width 0 --anchor-text c --frame-rate 640 print
   else
-    echo "$1"
+    gum style --foreground 2 --padding "0 0 0 $PADDING_LEFT" "$1"
   fi
 }
 
@@ -12,7 +12,7 @@ show_logo() {
   if command -v tte >/dev/null 2>&1; then
     tte -i ~/.local/share/omaniri/logo.txt --canvas-width 0 --anchor-text c --frame-rate 920 laseretch
   else
-    cat ~/.local/share/omaniri/logo.txt
+    gum style --foreground 2 --padding "1 0 0 $PADDING_LEFT" "$(<~/.local/share/omaniri/logo.txt)"
   fi
 }
 
