@@ -17,7 +17,12 @@ if omaniri-pkg-missing "$@"; then
     sudo pacman -S --noconfirm --needed "${pacman_pkgs[@]}" || exit 1
   fi
   if ((${#aur_pkgs[@]} > 0)); then
-    yay -S --noconfirm --needed "${aur_pkgs[@]}" || exit 1
+    if [[ -n ${OMANIRI_ONLINE_INSTALL:-} ]]; then
+      yay -S --noconfirm --needed "${aur_pkgs[@]}" || exit 1
+    else
+      echo "The following packages are not available in the offline mirror: ${aur_pkgs[*]}" >&2
+      exit 1
+    fi
   fi
 fi
 
