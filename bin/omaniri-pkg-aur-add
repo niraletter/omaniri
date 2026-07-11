@@ -4,7 +4,21 @@
 # omaniri:args=<packages...>
 
 if omaniri-pkg-missing "$@"; then
-  yay -S --noconfirm --needed "$@" || exit 1
+  pacman_pkgs=()
+  aur_pkgs=()
+  for pkg in "$@"; do
+    if pacman -Si "$pkg" &>/dev/null; then
+      pacman_pkgs+=("$pkg")
+    else
+      aur_pkgs+=("$pkg")
+    fi
+  done
+  if ((${#pacman_pkgs[@]} > 0)); then
+    sudo pacman -S --noconfirm --needed "${pacman_pkgs[@]}" || exit 1
+  fi
+  if ((${#aur_pkgs[@]} > 0)); then
+    yay -S --noconfirm --needed "${aur_pkgs[@]}" || exit 1
+  fi
 fi
 
 for pkg in "$@"; do
