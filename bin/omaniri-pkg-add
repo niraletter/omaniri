@@ -38,19 +38,28 @@ pacman_pkgs=()
 chaotic_pkgs=()
 aur_pkgs=()
 
-for pkg in "$@"; do
-  if pacman -Q "$pkg" &>/dev/null; then
-    continue
-  fi
+if [[ -n ${OMANIRI_ONLINE_INSTALL:-} ]]; then
+  for pkg in "$@"; do
+    if pacman -Q "$pkg" &>/dev/null; then
+      continue
+    fi
 
-  if pkg_in_official_repos "$pkg"; then
+    if pkg_in_official_repos "$pkg"; then
+      pacman_pkgs+=("$pkg")
+    elif pkg_in_chaotic_packages "$pkg"; then
+      chaotic_pkgs+=("$pkg")
+    else
+      aur_pkgs+=("$pkg")
+    fi
+  done
+else
+  for pkg in "$@"; do
+    if pacman -Q "$pkg" &>/dev/null; then
+      continue
+    fi
     pacman_pkgs+=("$pkg")
-  elif pkg_in_chaotic_packages "$pkg"; then
-    chaotic_pkgs+=("$pkg")
-  else
-    aur_pkgs+=("$pkg")
-  fi
-done
+  done
+fi
 
 if ((${#pacman_pkgs[@]} > 0)); then
   sudo pacman -S --noconfirm --needed "${pacman_pkgs[@]}" || exit 1
