@@ -1,6 +1,9 @@
 if lspci | grep -qi 'nvidia'; then
-  # Check which kernel is installed and set appropriate headers package
-  KERNEL_HEADERS="$(pacman -Qqs '^linux(-zen|-lts|-hardened)?$' | head -1)-headers"
+  # Check which kernel is installed and set appropriate headers package.
+  # Use an exact name match (pacman -Qq piped to grep) instead of `pacman -Qqs`,
+  # whose regex also matches package descriptions and can pick the wrong kernel
+  # on multi-kernel systems.
+  KERNEL_HEADERS="$(pacman -Qq | grep -E '^linux(-zen|-lts|-hardened)?$' | head -1)-headers"
 
   if omaniri-hw-nvidia-gsp; then
     PACKAGES=(nvidia-open-dkms nvidia-utils lib32-nvidia-utils libva-nvidia-driver)
@@ -21,3 +24,5 @@ if lspci | grep -qi 'nvidia'; then
   sudo tee /etc/modprobe.d/nvidia.conf <<EOF >/dev/null
 options nvidia_drm modeset=1
 EOF
+fi
+

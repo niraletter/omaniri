@@ -5,9 +5,13 @@ sudo ln -snf /usr/share/icons/Adwaita/symbolic/actions/go-next-symbolic.svg /usr
 # Setup user theme folder
 mkdir -p ~/.config/omaniri/themes
 
-# Google chrome policy directory for theme
+# Google chrome policy directory for theme.
+# Owned by the user (so omaniri-theme-set-browser can write the policy file)
+# but never world-writable, otherwise any local user could drop enterprise
+# policies (force extensions, disable safe-browsing).
 sudo mkdir -p /etc/opt/chrome/policies/managed
-sudo chmod a+rw /etc/opt/chrome/policies/managed
+sudo chown "${USER:-root}" /etc/opt/chrome/policies/managed
+sudo chmod 0755 /etc/opt/chrome/policies/managed
 
 # Set initial theme
 omaniri-theme-set "Catppuccin"

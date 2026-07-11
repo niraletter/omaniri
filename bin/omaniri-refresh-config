@@ -17,9 +17,17 @@ USAGE
   exit 1
 fi
 
+# Reject path traversal / absolute paths so a caller cannot write outside the
+# omaniri config tree (e.g. `omaniri-refresh-config ../../etc/cron.d/x`).
+if [[ $config_file == /* || $config_file == *..* ]]; then
+  echo "Error: config path must be relative to the omaniri config tree (no '/' prefix or '..')." >&2
+  exit 1
+fi
+
 # Backup the destination file (with timestamp) to avoid clobbering (Ex: hyprlock.conf.bak.1753817951)
+omaniri_root="${OMANIRI_PATH:-$HOME/.local/share/omaniri}"
 user_config_file="${HOME}/.config/$config_file"
-default_config_file="${HOME}/.local/share/omaniri/config/$config_file"
+default_config_file="$omaniri_root/config/$config_file"
 backup_config_file="$user_config_file.bak.$(date +%s)"
 
 mkdir -p "$(dirname "$user_config_file")"

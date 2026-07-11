@@ -7,8 +7,8 @@ start_log_output() {
   local ANSI_GRAY="\033[90m"
 
   # Save cursor position and hide cursor
-  printf $ANSI_SAVE_CURSOR
-  printf $ANSI_HIDE_CURSOR
+  printf '%b' "$ANSI_SAVE_CURSOR"
+  printf '%b' "$ANSI_HIDE_CURSOR"
 
   (
     local log_lines=20
@@ -54,7 +54,8 @@ stop_log_output() {
 
 start_install_log() {
   sudo touch "$OMANIRI_INSTALL_LOG_FILE"
-  sudo chmod 666 "$OMANIRI_INSTALL_LOG_FILE"
+  sudo chown "${USER:-root}" "$OMANIRI_INSTALL_LOG_FILE"
+  sudo chmod 644 "$OMANIRI_INSTALL_LOG_FILE"
 
   export OMANIRI_START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -118,8 +119,9 @@ run_logged() {
 
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting: $script" >>"$OMANIRI_INSTALL_LOG_FILE"
 
-  # Use bash -c to create a clean subshell
-  bash -c "source '$script'" </dev/null >>"$OMANIRI_INSTALL_LOG_FILE" 2>&1
+  # Use bash -c to create a clean subshell. Inherit errexit/pipefail so a
+  # failing command inside a leaf script aborts and is reported (not masked).
+  bash -c "set -eEo pipefail; source '$script'" </dev/null >>"$OMANIRI_INSTALL_LOG_FILE" 2>&1
 
   local exit_code=$?
 
