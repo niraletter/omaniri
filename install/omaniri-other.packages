@@ -37,6 +37,7 @@ sof-firmware
 thermald
 webp-pixbuf-loader
 yay-bin
+yt-dlp
 zram-generator
 
 # Intel encoding processing
