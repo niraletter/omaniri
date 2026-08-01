@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle suspend availability in the system menu
+
+omaniri-toggle suspend-off
+
+if omaniri-toggle-enabled suspend-off; then
+  omaniri-notification-send -g 󰒲 "Suspend removed from system menu"
+else
+  omaniri-notification-send -g 󰒲 "Suspend now available in system menu"
+fi

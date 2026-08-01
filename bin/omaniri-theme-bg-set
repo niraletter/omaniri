@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# omaniri:summary=Set the current background image
+# omaniri:args=<path-to-image>
+# omaniri:examples=omaniri theme bg set ~/Pictures/background.png
+
+if [[ -z $1 ]]; then
+  echo "Usage: omaniri-theme-bg-set <path-to-image>" >&2
+  exit 1
+fi
+
+BACKGROUND="$(realpath "$1")"
+CURRENT_BACKGROUND_LINK="$HOME/.local/state/omaniri/current/background"
+
+if [[ ! -f $BACKGROUND ]]; then
+  echo "File does not exist: $BACKGROUND" >&2
+  exit 1
+fi
+
+# Create symlink to the new background
+ln -nsf "$BACKGROUND" "$CURRENT_BACKGROUND_LINK"
+
+# Update the live shell background immediately when it is running. The
+# background plugin also polls this symlink, but IPC avoids the visible delay.
+omaniri-shell -q background set "$BACKGROUND"

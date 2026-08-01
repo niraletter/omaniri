@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "omaniri.menu",
+  "name": "Omaniri menu",
+  "version": "1.0.0",
+  "author": "Omaniri",
+  "description": "Quickshell-powered Omaniri command menu",
+  "kinds": [
+    "menu",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "menu": "Menu.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Omaniri menu",
+    "description": "Launches the Omaniri menu",
+    "category": "Compositor",
+    "allowMultiple": false
+  }
+}

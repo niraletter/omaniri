@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# omaniri:summary=NO NIRI EQUIVALENT NEEDED -- documents why this becomes a no-op.
+# omaniri:hidden=true
+# Ported from omaniri-hyprland-reload-guard.
+#
+# The Hyprland version exists to pause Hyprland's `misc.disable_autoreload`
+# and `debug.suppress_errors` options around pacman package transactions,
+# because Hyprland auto-reloads its config file the instant it changes on
+# disk -- which could fire mid-write while a package manager is replacing
+# config files, reading a half-written file and throwing user-visible errors.
+#
+# I could not confirm Niri exposes an equivalent "pause autoreload" runtime
+# toggle via `niri msg`. Niri does reload its config on save, similarly to
+# Hyprland, so the same half-written-file race is plausible in principle --
+# but without a confirmed IPC action to pause it, faking a pause here would
+# be worse than not having one: it would look like protection that isn't
+# happening. This is intentionally left as a documented no-op rather than a
+# guess. If Niri gains an equivalent option, wire it in here.
+
+case "${1:-}" in
+  pause | resume | paused) exit 0 ;;
+  *)
+    echo "Usage: omaniri-niri-reload-guard pause|resume|paused" >&2
+    exit 1
+    ;;
+esac

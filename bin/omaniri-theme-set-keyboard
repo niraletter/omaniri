@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Apply the current theme keyboard color to supported keyboards
+# omaniri:hidden=true
+
+omaniri-theme-set-keyboard-asus-rog
+omaniri-theme-set-keyboard-f16

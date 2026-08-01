@@ -1,0 +1,5 @@
+#!/bin/bash
+# omaniri:summary=Toggles window gaps globally between no gaps and the default (Niri).
+# Requires a `window-no-gaps.kdl` snippet under default/niri/toggles/ that sets
+# `layout { gaps 0; }`, included the same way omaniri-niri-toggle expects.
+omaniri-niri-toggle window-no-gaps

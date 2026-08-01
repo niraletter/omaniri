@@ -1,0 +1,21 @@
+[Unit]
+Description=Lock Omaniri before suspend
+# The monitor calls into the running Omaniri shell. The session wrapper imports
+# OMANIRI_PATH into the user manager and niri's session service imports
+# WAYLAND_DISPLAY, both before graphical-session.target is reached, so no extra
+# wait is needed; keep the default target ordering so the monitor starts before
+# graphical-session.target is reached.
+After=dbus.socket graphical-session-pre.target
+Requires=dbus.socket
+PartOf=graphical-session.target
+ConditionEnvironment=OMANIRI_PATH
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/omaniri-system-sleep-monitor
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

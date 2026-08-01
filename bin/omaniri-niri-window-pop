@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# omaniri:summary=Approximate pop-out: float + resize + center the focused window.
+# omaniri:args=[width height x y]
+# Ported from omaniri-hyprland-window-pop.
+# NOT A FULL PORT -- Niri has no equivalent to Hyprland's `pin` (always-on-top
+# across workspace switches), `alterzorder`, or `tagwindow`. This script can
+# only reproduce the floating + resize + position/center parts. The window
+# will NOT stay pinned on top when you switch workspaces on Niri; there is no
+# IPC action for that as of this writing. Treat this as "float and size a
+# window", not a true pop-out.
+
+width=${1:-1300}
+height=${2:-900}
+x=${3:-}
+y=${4:-}
+
+is_floating=$(niri msg -j focused-window 2>/dev/null | jq -r '.is_floating // false')
+
+if [[ $is_floating == "true" ]]; then
+  niri msg action toggle-window-floating >/dev/null 2>&1
+else
+  niri msg action toggle-window-floating >/dev/null 2>&1
+  niri msg action set-window-width "${width}" >/dev/null 2>&1
+  niri msg action set-window-height "${height}" >/dev/null 2>&1
+
+  if [[ -n $x && -n $y ]]; then
+    # Niri has no absolute move-to-x,y IPC action for floating windows as of
+    # this writing; there is no direct equivalent to Hyprland's moveactive.
+    echo "omaniri-niri-window-pop: absolute x,y positioning has no Niri IPC equivalent; centering instead." >&2
+  fi
+
+  niri msg action center-window >/dev/null 2>&1
+fi

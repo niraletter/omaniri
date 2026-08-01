@@ -1,0 +1,6 @@
+#!/bin/bash
+# omaniri:summary=Toggle single-window square aspect ratio (Niri).
+case $(omaniri-niri-toggle single-window-aspect-ratio) in
+  on) omaniri-notification-send -g  "Enable single-window square aspect ratio" ;;
+  off) omaniri-notification-send -g  "Disable single-window square aspect ratio" ;;
+esac

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# omaniri:summary=Open the Omaniri background switcher
+# omaniri:group=theme
+# omaniri:name=bg-switcher
+# omaniri:aliases=omaniri background
+
+theme_name=$(cat "$HOME/.local/state/omaniri/current/theme.name" 2>/dev/null)
+current_background=$(readlink -f "$HOME/.local/state/omaniri/current/background" 2>/dev/null)
+
+omaniri-menu-images \
+  --selected "$current_background" \
+  "$HOME/.local/state/omaniri/current/theme/backgrounds" \
+  "$HOME/.config/omaniri/backgrounds/$theme_name"

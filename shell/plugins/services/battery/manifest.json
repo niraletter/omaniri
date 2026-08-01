@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "omaniri.battery",
+  "name": "Battery",
+  "version": "1.0.0",
+  "author": "Omaniri",
+  "description": "Low battery warning service",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  }
+}

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# omaniri:summary=Print the active Omaniri dev-link git branch
+# omaniri:hidden=true
+
+omaniri_path=${OMANIRI_PATH:-/usr/share/omaniri}
+omaniri_path=${omaniri_path%/}
+
+[[ $omaniri_path != "/usr/share/omaniri" ]] || exit 1
+
+branch=$(git -C "$omaniri_path" branch --show-current 2>/dev/null || true)
+if [[ -z $branch ]]; then
+  hash=$(git -C "$omaniri_path" rev-parse --short HEAD 2>/dev/null || true)
+  [[ -n $hash ]] || exit 1
+  branch="detached@$hash"
+fi
+
+echo "$branch"

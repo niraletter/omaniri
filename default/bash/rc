@@ -1,0 +1,7 @@
+: "${OMANIRI_PATH:=/usr/share/omaniri}"
+source "$OMANIRI_PATH/default/bash/envs"
+source "$OMANIRI_PATH/default/bash/shell"
+source "$OMANIRI_PATH/default/bash/aliases"
+source "$OMANIRI_PATH/default/bash/functions"
+source "$OMANIRI_PATH/default/bash/init"
+[[ $- == *i* ]] && bind -f "$OMANIRI_PATH/default/bash/inputrc"

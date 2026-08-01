@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite the user config for hyprsunset with the Omaniri default and restart the service.
+
+omaniri-refresh-config hypr/hyprsunset.conf
+omaniri-restart-hyprsunset

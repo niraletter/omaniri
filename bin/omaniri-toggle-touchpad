@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Enable, disable, or toggle the touchpad
+# omaniri:args=[on|off|toggle]
+
+exec omaniri-toggle-input-device touchpad "${1:-toggle}"

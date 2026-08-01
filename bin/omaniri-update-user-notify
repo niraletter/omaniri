@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Compatibility wrapper for omaniri-migrate-notify.
+# omaniri:hidden=true
+
+exec omaniri-migrate-notify "$@"

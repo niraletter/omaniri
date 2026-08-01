@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "omaniri.system-update",
+  "name": "Omaniri update",
+  "version": "1.0.0",
+  "author": "Omaniri",
+  "description": "Indicates available Omaniri updates",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "SystemUpdate.qml"
+  },
+  "barWidget": {
+    "displayName": "Omaniri update",
+    "description": "Indicates available Omaniri updates",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# omaniri:summary=Watch Niri output events and recover monitor toggles when a monitor is removed
+# Ported from omaniri-hyprland-monitor-watch.
+#
+# Protocol swap: Hyprland's version reads raw `event>>data` lines off a raw
+# Unix socket (`.socket2.sock`) via socat. Niri instead exposes
+# `niri msg -j event-stream`, which prints one JSON object per line and needs
+# no manual socket path construction (no HYPRLAND_INSTANCE_SIGNATURE
+# equivalent to build a path from) -- `niri msg` finds the running
+# compositor's socket itself via $NIRI_SOCKET. Event names change from
+# Hyprland's `monitoradded`/`monitorremoved`/`configreloaded` to Niri's
+# `OutputsChanged` (Niri does not distinguish added vs removed at the event
+# level the way Hyprland's v1/v2 event pairs do -- OutputsChanged fires for
+# any change and callers are expected to diff the new output list themselves).
+#
+# DROPPED: the `recover_modeless` reload-loop logic. It exists in the
+# Hyprland version specifically to work around Hyprland bringing up a
+# monitor at 0x0 with no video mode after a cold power-on, recoverable only
+# via `hyprctl reload` re-reading the EDID. I could not confirm Niri has the
+# same "monitor stuck modeless until reload" failure mode, and Niri's output
+# handling doesn't require a config reload the way Hyprland's does -- so
+# porting that recovery loop as-is would be solving a problem Niri may not
+# have, using a mechanism (config reload) that isn't how Niri applies output
+# changes anyway. If you observe the same modeless-monitor bug on Niri, this
+# needs to be re-added deliberately, not guessed at here.
+
+LOCK="${XDG_RUNTIME_DIR:-/tmp}/omaniri-monitor-clamshell-niri.lock"
+
+sync_clamshell() {
+  (
+    flock -n 9 || exit 0
+    omaniri-niri-monitor-clamshell
+  ) 9>"$LOCK"
+}
+
+sync_clamshell_after_monitor_change() {
+  sync_clamshell
+  (
+    for delay in 1 3 7; do
+      sleep "$delay"
+      sync_clamshell
+    done
+  ) &
+}
+
+poll_pid=""
+sync_poll_state() {
+  if omaniri-hw-laptop && omaniri-niri-monitor-external-active; then
+    if [[ -z $poll_pid ]] || ! kill -0 "$poll_pid" 2>/dev/null; then
+      ( while true; do sleep 2; sync_clamshell; done ) &
+      poll_pid=$!
+    fi
+  elif [[ -n $poll_pid ]]; then
+    kill "$poll_pid" 2>/dev/null
+    poll_pid=""
+  fi
+}
+
+sync_clamshell_after_monitor_change
+sync_poll_state
+
+niri msg -j event-stream | while read -r event; do
+  event_type=$(jq -r 'keys[0] // empty' <<<"$event" 2>/dev/null)
+  if [[ $event_type == "OutputsChanged" ]]; then
+    sync_clamshell_after_monitor_change
+    sync_poll_state
+  fi
+done

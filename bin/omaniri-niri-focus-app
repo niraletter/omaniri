@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# omaniri:summary=Focus a Niri window by application identity
+# omaniri:args=<app-name>
+# omaniri:examples=omaniri niri focus app Slack
+# Ported from omaniri-hyprland-focus-app. Hyprland's `class`/`initialClass`/
+# `initialTitle` become Niri's `app_id`/`title` (Niri does not distinguish an
+# "initial" vs current class/title the way Hyprland does -- there is only the
+# live app_id and title). The agent-terminal fallback match is adapted to match
+# on `app_id == "org.omaniri.agent"` plus a `title` regex instead.
+
+usage() {
+  echo "Usage: omaniri-niri-focus-app <app-name>" >&2
+  exit 1
+}
+
+app=${1:-}
+[[ -n $app ]] || usage
+
+window_id=$(
+  niri msg -j windows 2>/dev/null |
+    jq -r --arg pattern "$app" \
+      'def matches($value): ($value // "") | test($pattern; "i");
+       first(
+         (.[] | select(matches(.app_id))),
+         (.[] | select(.app_id == "org.omaniri.agent" and matches(.title)))
+       ).id // empty'
+)
+
+[[ -n $window_id ]] || exit 1
+
+niri msg action focus-window --id "$window_id" >/dev/null 2>&1

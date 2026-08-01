@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Omaniri (Niri)
+Comment=Omaniri Niri session
+Exec=/usr/share/omaniri/default/wayland-sessions/omaniri-session
+TryExec=niri-session
+Type=Application

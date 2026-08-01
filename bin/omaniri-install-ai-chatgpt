@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Install the ChatGPT desktop app
+# omaniri:requires-sudo=true
+
+set -e
+
+echo "Installing ChatGPT..."
+omaniri-pkg-add openai-codex-desktop
+
+echo "Opening ChatGPT..."
+setsid /usr/bin/chatgpt >/dev/null 2>&1 &
+
+echo ""
+echo "ChatGPT has been installed."

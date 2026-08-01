@@ -1,0 +1,6 @@
+#!/bin/bash
+# omaniri:summary=Launch emojis
+# omaniri:group=menu
+# omaniri:examples=omaniri menu emoji
+
+omaniri-shell shell toggle omaniri.emojis

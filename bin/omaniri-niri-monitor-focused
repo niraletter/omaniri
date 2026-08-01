@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Print the name of the currently focused Niri output.
+# Ported from omaniri-hyprland-monitor-focused. Niri's `outputs` IPC call does
+# not itself flag a "focused" output the way Hyprland's monitors call does --
+# focus lives on the workspace. We derive it via the focused window/workspace's
+# output, falling back to the first output if nothing is focused (e.g. empty session).
+
+focused_output=$(niri msg -j focused-output 2>/dev/null | jq -r '.name // empty')
+
+if [[ -n $focused_output ]]; then
+  echo "$focused_output"
+else
+  niri msg -j outputs | jq -r 'to_entries[0].value.name // empty'
+fi

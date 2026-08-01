@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# omaniri:summary=Print monitor panel state for the shell
+# omaniri:group=monitor
+#
+# CHANGED FOR NIRI: was `hyprctl monitors all -j`. The output below keeps the
+# same JSON shape the monitor panel has always consumed (name/focused/disabled/
+# mirrorOf/width/height), mapped from `niri msg -j outputs` + focused-output.
+# Niri has no output mirroring (mirrorOf is always "none") and does not list
+# powered-off outputs, so "disabled" is always false here.
+
+focused_name=$(niri msg -j focused-output 2>/dev/null | jq -r '.name // ""')
+monitors_json=$(niri msg -j outputs 2>/dev/null | jq -c --arg focused "$focused_name" '
+  [ to_entries[] | .value |
+    . + {
+      focused: (.name == $focused),
+      disabled: false,
+      mirrorOf: "none",
+      width: (.current_mode.width // .logical.width),
+      height: (.current_mode.height // .logical.height)
+    } ]')
+
+focused_monitor=$(printf '%s\n' "$monitors_json" | jq -r '[.[] | select(.focused == true)][0].name // ""')
+
+{ omaniri-brightness-display --monitor "$focused_monitor" 2>/dev/null; echo; } | head -n 1
+
+printf '%s\n' "$monitors_json" | jq -r '
+  def internal: test("^(eDP|LVDS|DSI)-");
+  ([.[] | select(.name | internal)][0].name // ""),
+  ([.[] | select((.name | internal) | not)][0].name // ""),
+  ([.[] | select((.name | internal) and .disabled != true)][0].name // ""),
+  ([.[] | select(.mirrorOf != "none") | if (.name | internal) then .mirrorOf else .name end][0] // "")
+'
+
+printf '%s\n' "$focused_monitor"
+omaniri-niri-monitor-scaling 2>/dev/null || echo
+
+printf '%s\n' "$monitors_json" | jq -c \
+  '[.[] | {name, enabled:(.disabled != true), focused:(.focused == true), width, height}]'

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle the current weather panel
+
+omaniri-shell shell toggle omaniri.weather

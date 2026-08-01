@@ -1,0 +1,22 @@
+#!/bin/bash
+# omaniri:summary=UNCONFIRMED -- Hyprland-specific failure mode, may not apply to Niri.
+# omaniri:hidden=true
+# Ported from omaniri-hyprland-monitor-modeless.
+#
+# The original detects a Hyprland-specific bug: a monitor powered off at boot
+# answering with a partial EDID, brought up at 0x0 with no video mode. I have
+# no confirmation Niri has the same failure mode, or that `current_mode` in
+# `niri msg -j outputs` goes null/zero in the same situation rather than the
+# output simply not appearing at all. This is left as a best-effort check
+# against `current_mode` being null; verify against real hardware before
+# relying on it, and see omaniri-niri-monitor-watch for why the original's
+# recovery reload-loop was dropped rather than ported.
+
+monitors=$(niri msg -j outputs 2>/dev/null) || exit 2
+
+state=$(jq 'if any(.[]; .current_mode == null) then 0 else 1 end' <<<"$monitors" 2>/dev/null)
+
+case $state in
+  0 | 1) exit "$state" ;;
+  *) exit 2 ;;
+esac

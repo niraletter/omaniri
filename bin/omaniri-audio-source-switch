@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# omaniri:summary=Cycle to the next media source and transfer playback when the current source is playing
+# omaniri:args=[next|previous]
+# omaniri:examples=omaniri audio source switch | omaniri-audio-source-switch previous
+
+direction="${1:-next}"
+
+case "$direction" in
+  next)
+    omaniri-shell media sourceSwitch
+    ;;
+  previous)
+    omaniri-shell media sourceSwitchPrevious
+    ;;
+  *)
+    echo "Usage: omaniri-audio-source-switch [next|previous]" >&2
+    exit 1
+    ;;
+esac

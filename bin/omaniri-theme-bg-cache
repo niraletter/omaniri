@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omaniri:summary=Cache background switcher thumbnails for the current theme
+
+theme_name=$(cat "$HOME/.local/state/omaniri/current/theme.name" 2>/dev/null)
+
+omaniri-menu-images \
+  --cache-only \
+  "$HOME/.local/state/omaniri/current/theme/backgrounds" \
+  "$HOME/.config/omaniri/backgrounds/$theme_name"

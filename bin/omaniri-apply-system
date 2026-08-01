@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# omaniri:summary=Apply Omaniri system setup in the installed target
+# omaniri:group=apply
+# omaniri:requires-sudo=true
+# omaniri:examples=omaniri apply system --install-user nira --first-install
+# omaniri:hidden=true
+
+set -euo pipefail
+
+usage() {
+  cat <<USAGE
+Usage: omaniri apply system --install-user USER [--first-install|--upgrade]
+       omaniri apply system --defer-provisioning --first-install
+
+Runs root-owned Omaniri system setup. The ISO calls this in the target chroot
+after packages are installed and the target user exists. It also calls
+omaniri-apply-hardware, so hardware setup cannot be accidentally skipped.
+
+--defer-provisioning runs without an install user: deferred-provisioning installs create the user at
+first boot, so scripts that grant group memberships record them in
+/var/lib/omaniri/provisioning/groups instead of calling usermod.
+USAGE
+}
+
+install_user="${OMANIRI_INSTALL_USER:-}"
+first_install=0
+upgrade=0
+defer_provisioning=0
+
+while (($#)); do
+  case "$1" in
+    --install-user)
+      install_user="${2:-}"
+      shift 2
+      ;;
+    --defer-provisioning)
+      defer_provisioning=1
+      shift
+      ;;
+    --first-install)
+      first_install=1
+      shift
+      ;;
+    --upgrade)
+      upgrade=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+if (( EUID != 0 )); then
+  echo "Error: omaniri-apply-system must run as root" >&2
+  exit 1
+fi
+
+if (( defer_provisioning )); then
+  install_user=""
+else
+  if [[ -z $install_user || $install_user == "root" ]]; then
+    echo "Error: --install-user must name the target non-root user" >&2
+    exit 1
+  fi
+
+  if ! getent passwd "$install_user" >/dev/null; then
+    echo "Error: user '$install_user' does not exist" >&2
+    exit 1
+  fi
+fi
+
+export OMANIRI_INSTALL_USER="$install_user"
+export OMANIRI_FIRST_INSTALL="$first_install"
+export OMANIRI_UPGRADE="$upgrade"
+export OMANIRI_PATH="${OMANIRI_PATH:-/usr/share/omaniri}"
+export OMANIRI_INSTALL="${OMANIRI_INSTALL:-$OMANIRI_PATH/install}"
+export OMANIRI_INSTALL_LOG_FILE="${OMANIRI_INSTALL_LOG_FILE:-/var/log/omaniri-install.log}"
+export PATH="$OMANIRI_PATH/bin:$PATH"
+
+source "$OMANIRI_INSTALL/helpers/logging.sh"
+start_install_log
+
+source "$OMANIRI_INSTALL/config/all.sh"
+
+if (( defer_provisioning )); then
+  omaniri-apply-hardware --defer-provisioning
+else
+  omaniri-apply-hardware --install-user "$install_user"
+fi
+
+source "$OMANIRI_INSTALL/login/all.sh"
+source "$OMANIRI_INSTALL/post-install/all.sh"
+
+stop_install_log

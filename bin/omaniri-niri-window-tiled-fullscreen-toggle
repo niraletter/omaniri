@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle fullscreen for the focused Niri window
+# Ported from omaniri-hyprland-window-tiled-fullscreen-toggle.
+# PARTIAL PORT / BEHAVIOR CHANGE: Hyprland distinguishes "internal" tiled
+# fullscreen from a client's own native fullscreen request (fullscreenClient
+# states 0/1/2). Niri has no equivalent internal/client distinction -- it has
+# one `fullscreen-window` action that toggles fullscreen for the focused
+# window, full stop. This script now just toggles that. If your workflow
+# depended on Hyprland's internal-vs-client distinction specifically, that
+# behavior does not exist on Niri and cannot be faithfully ported.
+
+niri msg action fullscreen-window >/dev/null 2>&1

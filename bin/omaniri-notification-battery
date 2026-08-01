@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Show the current battery status notification
+
+omaniri-notification-send -g 󰁹 -u low "$(omaniri-battery-status)"

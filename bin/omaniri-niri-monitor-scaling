@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# omaniri:summary=Show, set, or adjust focused Niri output scaling
+# omaniri:args=[up|down|SCALE]
+# Ported from omaniri-hyprland-monitor-scaling.
+#
+# SIMPLIFIED PORT: Hyprland's version computes a "clean" scale that keeps the
+# logical resolution an exact integer (GCD-based math against Hyprland's
+# 1/120-step scale quantization). Niri does not document or require the same
+# quantization behavior and accepts an arbitrary float scale via
+# `niri msg output <name> scale <value>`, so that GCD "clean_scale" logic has
+# been dropped rather than blindly kept -- it was solving a Hyprland-specific
+# constraint that may not apply here. The GDK_SCALE / monitors.lua persistence
+# logic is also dropped: Niri's own output config lives in KDL, not a Lua file
+# Omaniri authored, so persisting across reboots means writing (or asking the
+# user to hand-edit) their `niri/config.kdl` output block -- not attempted
+# here automatically, to avoid corrupting a config file we can't safely parse
+# and rewrite with the confidence this script would need.
+
+SCALES=(1 1.25 1.6 2 3 4)
+
+usage() {
+  echo "Usage: omaniri-niri-monitor-scaling [up|down|SCALE]"
+}
+
+focused_output_info() {
+  local name
+  name=$(omaniri-niri-monitor-focused)
+  niri msg -j outputs | jq -e -c --arg name "$name" '.[$name]'
+}
+
+current_scale() {
+  focused_output_info | jq -r '.logical.scale // 1'
+}
+
+set_scale() {
+  local name scale
+  name=$(omaniri-niri-monitor-focused)
+  scale="$1"
+  niri msg output "$name" scale "$scale" >/dev/null 2>&1
+}
+
+scale_from_current() {
+  local direction="$1" scale="$2"
+  awk -v direction="$direction" -v scale="$scale" -v list="${SCALES[*]}" '
+    BEGIN {
+      n = split(list, presets, " ")
+      best = 1; best_diff = 1e9
+      for (i = 1; i <= n; i++) {
+        diff = scale - presets[i]; if (diff < 0) diff = -diff
+        if (diff < best_diff) { best_diff = diff; best = i }
+      }
+      if (direction == "next") print presets[(best < n ? best + 1 : n)]
+      else if (direction == "previous") print presets[(best > 1 ? best - 1 : 1)]
+      else print presets[best]
+    }'
+}
+
+case "${1:-}" in
+"")
+  current_scale
+  ;;
+-h | --help)
+  usage
+  ;;
+up)
+  set_scale "$(scale_from_current next "$(current_scale)")"
+  ;;
+down)
+  set_scale "$(scale_from_current previous "$(current_scale)")"
+  ;;
+*)
+  if [[ $1 =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+    set_scale "$1"
+  else
+    usage >&2
+    exit 1
+  fi
+  ;;
+esac

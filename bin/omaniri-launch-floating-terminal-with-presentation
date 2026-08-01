@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# omaniri:summary=Launch a floating terminal with the Omaniri presentation wrapper
+# omaniri:args=<command>
+
+# Export the current theme's gum styling so gum widgets match the active theme
+# even after a theme switch (the inherited environment is captured at login).
+source omaniri-restart-gum
+
+cmd="$*"
+presentation_script="omaniri-show-logo; $cmd; if (( \$? != 130 )); then omaniri-show-done; fi"
+
+exec setsid xdg-terminal-exec --app-id=org.omaniri.terminal --title=Omaniri -e bash -c "$presentation_script"

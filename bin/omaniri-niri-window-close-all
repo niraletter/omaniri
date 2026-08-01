@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Close all open windows
+# Ported from omaniri-hyprland-window-close-all. `niri msg action close-window`
+# takes an --id like focus-window does; there is no bulk-close IPC call, so we
+# still loop. Niri workspaces are per-output and are usually referenced by
+# index or name rather than a single global "1" -- we focus the first
+# workspace on the currently focused output instead of a fixed "1", since a
+# hardcoded global workspace 1 does not reliably exist in Niri's per-output model.
+
+niri msg -j windows | jq -r '.[].id' | while read -r id; do
+  niri msg action close-window --id "$id" >/dev/null 2>&1
+done
+
+niri msg action focus-workspace 1 >/dev/null 2>&1 || true

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Enable, disable, or toggle the touch functionality of the screen
+# omaniri:args=[on|off|toggle]
+
+exec omaniri-toggle-input-device touchscreen "${1:-toggle}"

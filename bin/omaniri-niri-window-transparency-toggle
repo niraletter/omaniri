@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# omaniri:summary=NO NIRI EQUIVALENT -- documents the gap rather than faking it.
+# Ported from omaniri-hyprland-window-transparency-toggle.
+#
+# Hyprland exposes a per-window runtime property (`setprop <window> opaque
+# toggle`) that lets a compositor-level dispatch flip one window's opacity on
+# the fly. Niri has no equivalent IPC action or window property for per-window
+# runtime opacity as of this writing -- opacity in Niri is a compositor-wide
+# or window-rule-time setting (`window-rule { opacity ... }`), not something
+# you can toggle live on the currently focused window via `niri msg`.
+#
+# This script intentionally does nothing but explain that, so a keybind wired
+# to it fails loudly instead of silently. If you want this back, the closest
+# available option is a static per-app `opacity` window-rule in your Niri KDL
+# config, which is NOT a live toggle -- it applies at window-open time only.
+
+echo "omaniri-niri-window-transparency-toggle: no live per-window opacity toggle exists in Niri's IPC. See PORT_STATUS.md." >&2
+exit 1

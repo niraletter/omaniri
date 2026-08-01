@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# omaniri:summary=Open Voxtype configuration
+
+set -e
+
+omaniri-launch-floating-terminal-with-presentation "voxtype configure"
+omaniri-restart-shell

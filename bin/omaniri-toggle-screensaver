@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle screensaver availability
+
+omaniri-toggle screensaver-off
+
+if omaniri-toggle-enabled screensaver-off; then
+  omaniri-notification-send -g 󱄄 "Screensaver disabled"
+else
+  omaniri-notification-send -g 󱄄 "Screensaver enabled"
+fi

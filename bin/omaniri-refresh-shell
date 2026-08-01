@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Reset shell.json to Omaniri defaults
+# omaniri:examples=omaniri refresh shell
+
+set -euo pipefail
+
+omaniri-refresh-config omaniri/shell.json
+omaniri-bar defaults
+
+omaniri-restart-shell

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle notification do-not-disturb mode
+
+state=$(omaniri-shell notifications toggleDnd 2>/dev/null || echo "")
+omaniri-shell -q omaniri.indicators refresh

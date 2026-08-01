@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# omaniri:summary=Overwrite all the user Hyprland Lua configs in ~/.config/hypr with the Omaniri defaults.
+
+omaniri-refresh-config hypr/.luarc.json
+omaniri-refresh-config hypr/autostart.lua
+omaniri-refresh-config hypr/bindings.lua
+omaniri-refresh-config hypr/input.lua
+omaniri-refresh-config hypr/looknfeel.lua
+omaniri-refresh-config hypr/hyprland.lua
+omaniri-refresh-config hypr/monitors.lua
+
+mkdir -p ~/.local/state/omaniri/toggles/hypr
+cp "$OMANIRI_PATH/default/hypr/toggles/flags.lua" ~/.local/state/omaniri/toggles/hypr/

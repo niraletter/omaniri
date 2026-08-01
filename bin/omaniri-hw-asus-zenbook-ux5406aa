@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Detect ASUS Zenbook UX5406AA series laptops on Intel Panther Lake.
+
+omaniri-hw-match "ux5406aa" && omaniri-hw-intel-ptl

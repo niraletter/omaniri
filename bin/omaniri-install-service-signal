@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Install Signal and launch it.
+# omaniri:requires-sudo=true
+
+set -e
+
+echo "Installing Signal..."
+omaniri-pkg-add signal-desktop
+
+echo "Opening Signal..."
+setsid /usr/bin/signal-desktop >/dev/null 2>&1 &
+
+echo ""
+echo "Signal has been installed."

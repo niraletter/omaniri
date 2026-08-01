@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "omaniri.disk-speedtest",
+  "name": "Disk speed test",
+  "version": "1.0.0",
+  "author": "Omaniri",
+  "description": "Live disk write and read speed dials. Summon with: omaniri-shell shell summon omaniri.disk-speedtest",
+  "kinds": [
+    "panel"
+  ],
+  "entryPoints": {
+    "panel": "Panel.qml"
+  }
+}

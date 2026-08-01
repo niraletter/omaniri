@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# omaniri:summary=Enable, disable, toggle, or recover the internal laptop display (Niri)
+# omaniri:args=<on|off|toggle|recover>
+# Ported from omaniri-hyprland-monitor-internal.
+#
+# Behavior preserved: Hyprland's approach of writing a `.lua` snippet into a
+# toggles dir and running `hyprctl reload` becomes Niri's direct, immediate
+# `niri msg output <name> off|on` -- Niri applies output on/off changes at
+# runtime without a config reload, so the "write a flag file + reload" dance
+# is not needed here at all and has been dropped. State is still tracked in a
+# flag file purely so `recover()` and `toggle()` can tell what Omaniri itself
+# last did, independent of what the user did by hand.
+
+TOGGLE="internal-monitor-disable"
+TOGGLE_FLAG="$HOME/.local/state/omaniri/toggles/niri/$TOGGLE.flag"
+MIRROR_TOGGLE="internal-monitor-mirror"
+
+INTERNAL=$(omaniri-niri-monitor-laptop)
+
+on() {
+  if [[ -n $INTERNAL ]]; then
+    niri msg output "$INTERNAL" on >/dev/null 2>&1
+  fi
+  rm -f "$TOGGLE_FLAG"
+  omaniri-notification-send -g 󰍹 "Laptop display enabled"
+}
+
+off() {
+  if [[ -z $INTERNAL ]]; then
+    omaniri-notification-send -g 󰍹 "No laptop display found"
+    exit 1
+  fi
+
+  if ! omaniri-niri-monitor-external-active; then
+    omaniri-notification-send -g 󰍹 "Can't disable the only active display"
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$TOGGLE_FLAG")"
+  touch "$TOGGLE_FLAG"
+  niri msg output "$INTERNAL" off >/dev/null 2>&1
+  omaniri-notification-send -g 󰍹 "Laptop display disabled"
+}
+
+recover() {
+  omaniri-niri-monitor-external-active && return 0
+  [[ -f $TOGGLE_FLAG ]] || return 0
+
+  on
+}
+
+toggle() {
+  if [[ -f $TOGGLE_FLAG ]]; then
+    on
+  else
+    off
+  fi
+}
+
+case "$1" in
+  on) on ;;
+  off) off ;;
+  toggle) toggle ;;
+  recover) recover ;;
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac

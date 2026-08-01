@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# omaniri:summary=Ensure default application launchers and mise wrappers are installed.
+
+# Copy .desktop declarations
+mkdir -p ~/.local/share/applications
+cp "$OMANIRI_PATH"/applications/*.desktop ~/.local/share/applications/
+
+if omaniri-cmd-present alacritty; then
+  cp "$OMANIRI_PATH/default/alacritty/Alacritty.desktop" ~/.local/share/applications/
+fi
+
+if [[ -f "$OMANIRI_PATH/install/user/mise.sh" ]]; then
+  bash "$OMANIRI_PATH/install/user/mise.sh"
+fi
+
+update-desktop-database ~/.local/share/applications

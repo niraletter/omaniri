@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# omaniri:summary=Refresh the shell update status
+# omaniri:hidden=true
+
+set -e
+
+if omaniri-update-available >/dev/null; then
+  omaniri-shell -q omaniri.system-update refresh
+else
+  omaniri-shell -q omaniri.system-update clear
+fi

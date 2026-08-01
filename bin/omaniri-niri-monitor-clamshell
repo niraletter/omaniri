@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# omaniri:summary=Apply clamshell display state to Niri outputs
+# omaniri:hidden=true
+# Ported from omaniri-hyprland-monitor-clamshell.
+#
+# MAJOR SIMPLIFICATION, NOT A LINE-FOR-LINE PORT: the Hyprland version's bulk
+# is a hand-rolled Lua parser that reads the user's monitors.lua to discover
+# a per-output scale/position override before falling back to Omarchy's own
+# default. That parser exists only because Omarchy's Hyprland config is
+# itself Lua that gets eval'd. Niri's output config is declarative KDL, and
+# there is no equivalent need (or safe way) to regex-parse a user's KDL for
+# scalar values the way the original parses Lua locals -- KDL parsing without
+# a real parser is far riskier to get subtly wrong. So this port drops the
+# monitors.lua-scale-discovery feature entirely: on Niri, scale is either
+# whatever the output already has (Niri remembers it) or whatever
+# omaniri-niri-monitor-scaling was last used to set. If you relied on
+# Omarchy's scale-from-monitors.lua auto-detection specifically, that is a
+# real capability gap versus the Hyprland version.
+
+sync_scale_only() {
+  # Restore the internal display's last-known-good scale (recorded by
+  # omaniri-niri-monitor-scaling) rather than parsing a config file for it.
+  local internal scale_state
+  internal=$(omaniri-niri-monitor-laptop)
+  [[ -n $internal ]] || return 0
+
+  scale_state="$HOME/.local/state/omaniri/toggles/niri/internal-monitor-scale"
+  if [[ -f $scale_state ]]; then
+    local scale
+    scale=$(<"$scale_state")
+    [[ $scale =~ ^[0-9]+([.][0-9]+)?$ ]] && niri msg output "$internal" scale "$scale" >/dev/null 2>&1
+  fi
+}
+
+remember_scale() {
+  local internal scale
+  internal=$(omaniri-niri-monitor-laptop)
+  [[ -n $internal ]] || return 0
+
+  scale=$(niri msg -j outputs | jq -r --arg n "$internal" '.[$n].logical.scale // empty')
+  [[ -n $scale ]] || return 0
+
+  mkdir -p "$HOME/.local/state/omaniri/toggles/niri"
+  printf '%s\n' "$scale" >"$HOME/.local/state/omaniri/toggles/niri/internal-monitor-scale"
+}
+
+if omaniri-hw-clamshell && omaniri-niri-monitor-external-active; then
+  remember_scale
+  omaniri-niri-monitor-internal off
+else
+  omaniri-niri-monitor-internal on
+  sync_scale_only
+fi

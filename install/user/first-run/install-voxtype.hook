@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+if omaniri-done ensure voxtype-install-invitation; then
+  omaniri-notification-send -u critical -g  "Install Dictation with Voxtype" \
+    "Click to install voice dictation for Omaniri." \
+    --exec "omaniri-launch-floating-terminal-with-presentation omaniri-voxtype-install"
+fi

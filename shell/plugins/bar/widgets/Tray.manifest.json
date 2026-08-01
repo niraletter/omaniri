@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "omaniri.tray",
+  "name": "System tray",
+  "version": "1.0.0",
+  "author": "Omaniri",
+  "description": "Status notifier items",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Tray.qml"
+  },
+  "barWidget": {
+    "displayName": "System tray",
+    "description": "Status notifier items",
+    "category": "Status",
+    "allowMultiple": false
+  },
+  "omaniri": {
+    "clonePaths": [
+      {
+        "source": "TrayModel.js",
+        "target": "TrayModel.js"
+      }
+    ]
+  }
+}

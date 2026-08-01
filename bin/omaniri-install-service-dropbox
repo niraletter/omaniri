@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# omaniri:summary=Install and start the Dropbox service. Must then be authenticated via the web.
+
+echo "Installing all dependencies..."
+omaniri-pkg-add dropbox dropbox-cli libappindicator-gtk3 python-gpgme nautilus-dropbox
+
+echo "Adding Dropbox to the bar..."
+omaniri-plugin-enable omaniri.dropbox
+
+echo "Starting Dropbox..."
+dropbox-cli start &>/dev/null &
+echo "See Dropbox icon behind  hover tray in top right and right-click for setup."

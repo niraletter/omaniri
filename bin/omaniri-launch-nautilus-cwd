@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Launch Files in the active terminal's current directory
+
+exec setsid nautilus --new-window "$(omaniri-cmd-terminal-cwd)"

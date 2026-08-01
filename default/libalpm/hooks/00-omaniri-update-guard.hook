@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+Description = Checking Omaniri update entrypoint...
+When = PreTransaction
+Depends = omaniri
+Exec = /usr/bin/omaniri-update-pacman-guard
+AbortOnFail

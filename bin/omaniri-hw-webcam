@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Check whether a webcam is available
+
+[[ -n $(omaniri-capture-webcam-list) ]]

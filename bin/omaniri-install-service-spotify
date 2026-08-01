@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Install Spotify.
+# omaniri:requires-sudo=true
+
+set -e
+
+echo "Installing Spotify..."
+omaniri-pkg-add spotify
+
+echo "Opening Spotify..."
+setsid /usr/bin/spotify >/dev/null 2>&1 &
+
+echo ""
+echo "Spotify has been installed."

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# omaniri:summary=Print the name of the built-in laptop display, including disabled outputs.
+# Ported from omaniri-hyprland-monitor-laptop. `niri msg -j outputs` returns an
+# object keyed by output name (not an array like hyprctl), each value carrying
+# at minimum {name, make, model, ...}. Niri has no separate "all vs connected"
+# view the way `hyprctl monitors all` does -- outputs stays populated even when
+# an output is administratively turned off with `niri msg output <name> off`.
+
+niri msg -j outputs | jq -r 'to_entries[] | select(.value.name | test("^(eDP|LVDS|DSI)-")) | .value.name' | head -n 1

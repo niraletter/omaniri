@@ -1,0 +1,6 @@
+#!/bin/bash
+# omaniri:summary=Launch the clipboard manager
+# omaniri:group=menu
+# omaniri:examples=omaniri menu clipboard
+
+omaniri-shell shell toggle omaniri.clipboard

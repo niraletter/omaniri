@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle nightlight screen temperature
+# omaniri:args=[--status]
+# omaniri:examples=omaniri toggle nightlight
+
+ON_TEMP=4000
+OFF_TEMP=6500
+IDENTITY_TEMP=6000
+
+current_temp() {
+  local args pid
+
+  # hyprsunset has no IPC outside Hyprland, so its effective temperature is
+  # the -t value it was last launched with.
+  pid=$(pgrep -x hyprsunset | head -n1)
+  [[ -n $pid ]] || return
+  args=$(tr '\0' ' ' </proc/$pid/cmdline) || return
+  if [[ $args =~ -t[[:space:]]+([0-9]+) ]]; then
+    printf '%s\n' "${BASH_REMATCH[1]}"
+  fi
+}
+
+status_json() {
+  local temp enabled
+
+  temp=$(current_temp)
+  if [[ -n $temp ]] && (( temp < IDENTITY_TEMP )); then
+    enabled=true
+  else
+    enabled=false
+  fi
+
+  jq -cn --argjson enabled "$enabled" --arg temp "$temp" \
+    '{enabled:$enabled, temperature:(($temp | tonumber?) // null)}'
+}
+
+if [[ ${1:-} == "--status" ]]; then
+  status_json
+  exit 0
+fi
+
+# Query the current temperature
+CURRENT_TEMP=$(current_temp)
+
+if [[ -z $CURRENT_TEMP || $CURRENT_TEMP == $OFF_TEMP ]]; then
+  TARGET_TEMP=$ON_TEMP
+else
+  TARGET_TEMP=$OFF_TEMP
+fi
+
+# hyprsunset takes no runtime temperature changes on Niri (no IPC), so
+# applying a value means killing the daemon and relaunching it with -t; the
+# daemon then applies the target itself at startup, so no resend loop is
+# needed.
+pkill -x hyprsunset >/dev/null 2>&1
+sleep 0.2
+setsid hyprsunset -t $TARGET_TEMP >/dev/null 2>&1 &
+
+omaniri-shell -q nightlight refresh

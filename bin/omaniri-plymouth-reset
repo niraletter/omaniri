@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Restore the default Omaniri Plymouth boot theme and SDDM login screen
+# omaniri:requires-sudo=true
+
+omaniri-refresh-plymouth
+omaniri-refresh-sddm

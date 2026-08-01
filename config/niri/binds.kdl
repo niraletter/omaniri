@@ -1,0 +1,148 @@
+// Omaniri — Niri keybindings, ported from config/hypr/bindings.lua +
+// default/hypr/bindings/{tiling,utilities,applications,media,clipboard,voxtype}.lua
+//
+// THIS IS A PARTIAL, BEST-EFFORT TRANSLATION, NOT A GENERATED 1:1 MAP.
+// Niri's KDL bind format and action set differs from Hyprland's Lua
+// `o.bind(...)`/`hl.dsp...` dispatcher in real ways documented inline below.
+// Cross-check every line against `niri msg action --help` and the Niri wiki
+// Key-Bindings page on your actual installed Niri version before trusting
+// this for daily use -- action names have changed across Niri releases.
+//
+// Include this file from your main niri config.kdl with:
+//   include "~/.config/niri/binds.kdl"
+
+binds {
+    // --- Apps (applications.lua) ---
+    // Omarchy's { omaniri = "terminal" } indirection resolves an app via its
+    // own app-launch registry (bin/omaniri-launch-*). Niri's `spawn` action
+    // just execs a command directly -- there's no equivalent app-registry
+    // concept in Niri itself, so these still shell out to Omaniri's own
+    // launch scripts, which is the correct behavior to keep.
+    Mod+Return { spawn "omaniri-launch-or-focus" "terminal"; }
+    Mod+Shift+Return { spawn "omaniri-launch-or-focus" "browser"; }
+    Mod+Shift+F { spawn "omaniri-launch-or-focus" "nautilus"; }
+    Mod+Alt+Shift+F { spawn "omaniri-launch-or-focus" "nautilus-cwd"; }
+    Mod+Shift+B { spawn "omaniri-launch-or-focus" "browser"; }
+    Mod+Shift+Alt+B { spawn "omaniri-launch-or-focus" "browser" "--private"; }
+    Mod+Shift+N { spawn "omaniri-launch-or-focus" "editor"; }
+
+    // --- Menu / shell (utilities.lua) ---
+    // omaniri-menu / omaniri-shell are Omaniri's own tooling, unaffected by
+    // the compositor swap -- these pass straight through unchanged.
+    Mod+Space { spawn "omaniri-menu" "toggle"; }
+    Mod+Alt+Space { spawn "omaniri-menu" "toggle" "apps"; }
+    Mod+Ctrl+E { spawn "omaniri-shell" "shell" "toggle" "omaniri.emojis"; }
+    Mod+Ctrl+C { spawn "omaniri-menu" "toggle" "capture"; }
+    Mod+Ctrl+O { spawn "omaniri-menu" "toggle" "toggle"; }
+    Mod+Ctrl+H { spawn "omaniri-menu" "toggle" "hardware"; }
+    Mod+Escape { spawn "omaniri-menu" "toggle" "system"; }
+    Mod+K { spawn "omaniri-menu-keybindings"; }
+    Mod+Alt+K { spawn "omaniri-menu-tmux-keybindings"; }
+    Mod+Ctrl+K { spawn "omaniri-menu-herdr-keybindings"; }
+
+    // --- Window management (tiling.lua) ---
+    // close-window: direct 1:1 Niri action, no wrapper script needed.
+    Mod+W { close-window; }
+    // Bulk-close has no Niri IPC bulk action; still shells out.
+    Ctrl+Alt+Delete { spawn "omaniri-niri-window-close-all"; }
+
+    // hl.dsp.window.pseudo() (Hyprland's dwindle-only "pseudotile") has NO
+    // Niri equivalent -- Niri has no pseudotiling concept at all. Dropped,
+    // not mapped to anything.
+
+    Mod+T { toggle-window-floating; }
+    Mod+F { fullscreen-window; }
+    // "Tiled full screen" (Hyprland's internal-only fullscreen) has no
+    // distinct Niri action; both map to the same fullscreen-window as the
+    // regular full screen above. See omaniri-niri-window-tiled-fullscreen-toggle
+    // for the documented behavior change.
+    Mod+Ctrl+F { spawn "omaniri-niri-window-tiled-fullscreen-toggle"; }
+    Mod+Alt+F { maximize-column; }
+    Mod+O { spawn "omaniri-niri-window-pop"; }
+    Mod+Alt+Home { spawn "omaniri-niri-window-width" "save"; }
+    Mod+Home { spawn "omaniri-niri-window-width" "restore"; }
+    // Workspace-layout-toggle has no Niri equivalent at all -- see
+    // omaniri-niri-workspace-layout-toggle for why. Bound anyway so the key
+    // fails loudly with an explanation instead of doing nothing silently.
+    Mod+L { spawn "omaniri-niri-workspace-layout-toggle"; }
+
+    // Directional focus: Hyprland's single hl.dsp.focus({direction=...}) covers
+    // both intra-column and cross-column movement uniformly. Niri splits this
+    // into separate column-level and window-level (within-column) actions.
+    // This maps to the column-level actions, matching Hyprland's most common
+    // use case; intra-column vertical movement inside a tabbed/stacked column
+    // is a different Niri action (focus-window-up/down) not bound here.
+    Mod+Left { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Up { focus-window-up; }
+    Mod+Down { focus-window-down; }
+
+    // Numbered workspaces 1-10: Niri workspaces are per-output and commonly
+    // referenced by index within that output, matching this loop reasonably
+    // well. `move-window-to-workspace` is the direct equivalent of Hyprland's
+    // window.move; the "silent"/no-follow variant (SUPER+SHIFT+ALT+N in the
+    // original) has no confirmed Niri equivalent -- Niri's
+    // move-window-to-workspace always follows focus as far as I can confirm,
+    // so that specific "move without following" variant is dropped.
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+10 { focus-workspace 10; }
+    Mod+Shift+1 { move-window-to-workspace 1; }
+    Mod+Shift+2 { move-window-to-workspace 2; }
+    Mod+Shift+3 { move-window-to-workspace 3; }
+    Mod+Shift+4 { move-window-to-workspace 4; }
+    Mod+Shift+5 { move-window-to-workspace 5; }
+    Mod+Shift+6 { move-window-to-workspace 6; }
+    Mod+Shift+7 { move-window-to-workspace 7; }
+    Mod+Shift+8 { move-window-to-workspace 8; }
+    Mod+Shift+9 { move-window-to-workspace 9; }
+    Mod+Shift+10 { move-window-to-workspace 10; }
+
+    // Scratchpad: Niri has no named special/scratchpad workspace concept the
+    // way Hyprland does. NOT PORTED -- there is no direct equivalent action.
+    // Closest available approximation would be a regular named workspace
+    // treated as a scratchpad by convention, which is a workflow change, not
+    // a keybind translation, so left undone here deliberately.
+
+    Mod+Tab { focus-workspace-down; }
+    Mod+Shift+Tab { focus-workspace-up; }
+
+    Mod+Shift+Alt+Left { move-column-to-monitor-left; }
+    Mod+Shift+Alt+Right { move-column-to-monitor-right; }
+    // Niri has no explicit "up/down monitor" direction the way Hyprland's
+    // 2D monitor layout model does -- Niri's monitor model is effectively
+    // left/right only for this action. Not mapped.
+
+    Mod+Shift+Left { move-column-left; }
+    Mod+Shift+Right { move-column-right; }
+    Mod+Shift+Up { move-window-up; }
+    Mod+Shift+Down { move-window-down; }
+
+    Alt+Tab { focus-window-previous; }
+
+    // --- Display / hardware toggles (utilities.lua) ---
+    Mod+Backspace { spawn "omaniri-niri-window-transparency-toggle"; }
+    // window-gaps-toggle / single-square-aspect-toggle: these two were never
+    // in the hyprctl-scanned manifest (they're referenced but the scripts
+    // weren't among the 97 hyprctl-coupled files, meaning the originals may
+    // use hyprctl keyword/eval calls not caught by a plain `hyprctl` grep, or
+    // may not exist in this checkout). NOT PORTED here -- verify against your
+    // checkout before relying on this binding.
+    // Mod+Shift+Backspace { spawn "omaniri-hyprland-window-gaps-toggle"; }
+    // Mod+Ctrl+Backspace { spawn "omaniri-hyprland-window-single-square-aspect-toggle"; }
+
+    Mod+Ctrl+Delete { spawn "omaniri-niri-monitor-internal" "toggle"; }
+    Mod+Ctrl+Alt+Delete { spawn "omaniri-niri-monitor-internal-mirror" "toggle"; }
+    "switch:on:Lid Switch" { spawn "omaniri-system-lid-close"; }
+    "switch:off:Lid Switch" { spawn "omaniri-niri-monitor-clamshell"; }
+
+    Print { spawn "omaniri-capture-screenshot"; }
+    Alt+Print { spawn "omaniri-capture-screenrecording" "--stop-recording"; }
+}

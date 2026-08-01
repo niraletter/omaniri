@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# omaniri:summary=Returns true when the compositor holds a session lock (Niri)
+# omaniri:hidden=true
+# Ported from omaniri-hyprland-session-locked.
+#
+# UNCERTAIN PORT: Hyprland exposes lock state indirectly via
+# `solitaryBlockedBy` on `hyprctl monitors`. As of this writing, Niri's
+# `niri msg -j` surface does not document an equivalent per-output "blocked
+# by lock" field, and I could not confirm a direct IPC query for session-lock
+# state. This implementation falls back to checking whether a known
+# session-lock client (e.g. your lock screen's process) is running, which is
+# weaker than a real compositor-reported lock state and can be wrong if the
+# lock client is killed abnormally without releasing the lock. Treat this as
+# a placeholder to replace once/if Niri exposes real lock-state IPC.
+
+LOCK_PROCESS_PATTERN="${OMANIRI_LOCK_PROCESS_PATTERN:-omaniri-lockscreen}"
+
+if pgrep -f "$LOCK_PROCESS_PATTERN" >/dev/null 2>&1; then
+  exit 0
+else
+  exit 1
+fi

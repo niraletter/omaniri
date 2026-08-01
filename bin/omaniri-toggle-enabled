@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Check if a toggle is enabled (flag file exists)
+# omaniri:args=<flag-name>
+
+[[ -f "$HOME/.local/state/omaniri/toggles/$1" ]]

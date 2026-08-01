@@ -1,0 +1,41 @@
+# Single source of truth for OMANIRI_PATH + PATH adjustments. Sourced by:
+#   /etc/profile.d/omaniri.sh                 (system login shells)
+#   /etc/skel/.bashrc                         (interactive shells)
+#   default/wayland-sessions/omaniri-session  (Niri session)
+#   /usr/share/omaniri/default/bash/envs      (bash rc chain; SSH/non-login)
+
+# /etc/omaniri.conf is written by omaniri-dev-link and reset by
+# omaniri-dev-unlink. When absent, force the packaged default instead of
+# preserving a stale inherited value.
+if [ -f /etc/omaniri.conf ]; then
+  . /etc/omaniri.conf
+  : "${OMANIRI_PATH:=/usr/share/omaniri}"
+else
+  OMANIRI_PATH=/usr/share/omaniri
+fi
+export OMANIRI_PATH
+
+# Only prepend in dev-link mode. On a production install, the binaries are
+# already on PATH as /usr/bin/omaniri-* via the omaniri package — prepending
+# /usr/share/omaniri/bin would just be noise.
+if [ "$OMANIRI_PATH" != /usr/share/omaniri ]; then
+  case ":$PATH:" in
+    *":${OMANIRI_PATH%/}/bin:"*) ;;
+    *) PATH="${OMANIRI_PATH%/}/bin${PATH:+:$PATH}" ;;
+  esac
+fi
+
+# User-level tool paths, appended so system binaries keep precedence. This is
+# what lets login shells (ssh, bash -lc) and the Niri session find mise-managed
+# tools without an interactive rc. Keep these directories in sync with the PAM
+# PATH line from install/config/ssh-command-path.sh, which covers SSH commands
+# that run no shell setup at all.
+case ":$PATH:" in
+  *":$HOME/.local/share/mise/shims:"*) ;;
+  *) PATH="${PATH:+$PATH:}$HOME/.local/share/mise/shims" ;;
+esac
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) PATH="${PATH:+$PATH:}$HOME/.local/bin" ;;
+esac
+export PATH

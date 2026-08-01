@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Open a config file in the user's editor and surface a toast
+# omaniri:args=<path>
+# omaniri:examples=omaniri launch config-editor ~/.config/hypr/hyprland.lua
+
+path="${1-}"
+
+if [[ -z $path ]]; then
+  echo "Usage: omaniri-launch-config-editor <path>" >&2
+  exit 1
+fi
+
+omaniri-notification-send -u low "Editing config file" "$path"
+exec omaniri-launch-editor "$path"

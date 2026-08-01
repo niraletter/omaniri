@@ -1,0 +1,146 @@
+# Maintainer: Omaniri contributors
+# Vendored Omaniri package build. Adapted from upstream omarchy-pkgs
+# pkgbuilds/omarchy/PKGBUILD so a --local-source ISO build can produce
+# Omaniri-named packages from this checkout instead of upstream omarchy-named
+# ones. Keep the two repos' versioning conventions aligned:
+#  - Pre-releases use the ATTACHED form pkgver=X.Y.ZrcN — NO separator.
+#    pacman's vercmp orders 4.0.0rc1 < 4.0.0rc2 < 4.0.0.
+#  - pkgrel resets to 1 whenever pkgver changes; bump pkgrel alone only to
+#    repackage the same source.
+#  - _commit is the single source of truth for what gets built; pin it when
+#    cutting a release. omaniri and omaniri-settings must always carry
+#    identical _tag/_commit/pkgver.
+pkgname='omaniri'
+_tag=''
+_commit=''
+pkgver=4.0.0
+pkgrel=1
+pkgdesc='Beautiful, modern, and opinionated Arch Linux (Niri edition)'
+arch=('any')
+url='https://github.com/niraletter/omaniri'
+license=('MIT')
+conflicts=('omaniri-dev')
+# Hard depends: only packages whose removal would brick the desktop. The ISO
+# pacstraps the full default install set from install/omarchy-base.packages.
+depends=(
+  # Upstream signing keyring — Omaniri still consumes upstream mirrors and
+  # packages until it has its own repository infrastructure.
+  'omarchy-keyring'
+  # Exact-version pin: forces the runtime and settings packages to upgrade
+  # together and keeps a dev settings build from satisfying the stable pair.
+  "omaniri-settings=${pkgver}"
+
+  # Bootloader stack. Lives here rather than on omaniri-settings because
+  # omaniri-settings is also installed into the live ISO env (for plymouth /
+  # /etc/skel seeding), where the limine-mkinitcpio-hook would fail with
+  # 'Cannot detect an ESP path' inside the chroot.
+  'limine'
+  'limine-mkinitcpio-hook'
+  'limine-snapper-sync'
+  'snapper'
+
+  # Wayland / Niri core. uwsm is gone: the session starts through
+  # default/wayland-sessions/omaniri-session → niri-session, and apps launch
+  # directly. xdg-desktop-portal-gnome replaces xdg-desktop-portal-hyprland as
+  # Niri's screencast/screenshot portal.
+  'niri'
+  'quickshell-git'
+  'sddm'
+  'xdg-desktop-portal-gnome'
+
+  # Audio / auth / portal essentials
+  'wireplumber'
+  'pipewire'
+  'gnome-keyring'
+
+  # Required by omaniri-* scripts and the quickshell shell
+  'gum'
+  'jq'
+  'git'
+  'perl' # /usr/bin/omaniri-shell invokes perl directly
+
+  # Update availability checks (checkupdates from pacman-contrib uses fakeroot)
+  'fakeroot'
+  'pacman-contrib'
+
+  # System font (UI assumes it)
+  'ttf-jetbrains-mono-nerd-basic'
+)
+
+makedepends=(
+  'git'
+)
+
+# Source: the pinned release commit; set OMANIRI_SRC=/path/to/checkout to
+# build from a local source tree instead (this is what the ISO builder's
+# --local-source mode does).
+if [[ -n "${OMANIRI_SRC:-}" ]]; then
+  source=()
+  sha256sums=()
+else
+  source=("omaniri::git+https://github.com/niraletter/omaniri.git#commit=${_commit}")
+  sha256sums=('SKIP')
+fi
+
+prepare() {
+  if [[ -n "${OMANIRI_SRC:-}" ]]; then
+    rm -rf "$srcdir/omaniri"
+    mkdir -p "$srcdir/omaniri"
+    cp -a "${OMANIRI_SRC}/." "$srcdir/omaniri/"
+  fi
+}
+
+package() {
+  cd "$srcdir/omaniri"
+
+  # Runtime binaries — ship everything in bin/ except the debug helpers
+  # that ship from omaniri-settings (needed before omaniri is installed,
+  # e.g. on the ISO live env).
+  install -d "$pkgdir/usr/bin" "$pkgdir/usr/share/omaniri/bin"
+  for bin in bin/*; do
+    [[ -f $bin ]] || continue
+    local base
+    base=$(basename "$bin")
+    case "$base" in
+      omaniri-debug|omaniri-debug-idle|omaniri-upload-log)
+        continue
+        ;;
+    esac
+    install -Dm755 "$bin" "$pkgdir/usr/bin/$base"
+    ln -s "/usr/bin/$base" "$pkgdir/usr/share/omaniri/bin/$base"
+  done
+
+  install -d "$pkgdir/usr/share/omaniri"
+
+  # Guard direct pacman upgrades from bypassing the Omaniri update pipeline.
+  # The Hyprland reload pause/resume hooks are NOT shipped: they drive
+  # `hyprctl`, which no longer exists on a Niri system, and Niri has no
+  # reload-pause IPC to replace them with.
+  install -Dm644 default/libalpm/hooks/00-omaniri-update-guard.hook "$pkgdir/usr/share/libalpm/hooks/00-omaniri-update-guard.hook"
+
+  # Target-side setup scripts and package lists used by ISO finalization,
+  # first login, future users, migrations, and reinstall/reset commands.
+  cp -a install "$pkgdir/usr/share/omaniri/"
+
+  # Theme bundles for theme switching.
+  cp -a themes "$pkgdir/usr/share/omaniri/"
+
+  # Versioned migrations runner reads from this tree.
+  cp -a migrations "$pkgdir/usr/share/omaniri/"
+
+  # Fresh users created after install are already on the package layout in
+  # this build, so seed migration markers through /etc/skel. Existing users
+  # keep their own state and still run pending migrations on update.
+  if compgen -G 'migrations/*.sh' >/dev/null; then
+    install -d "$pkgdir/etc/skel/.local/state/omaniri/migrations"
+    for migration in migrations/*.sh; do
+      touch "$pkgdir/etc/skel/.local/state/omaniri/migrations/$(basename "$migration")"
+    done
+  fi
+
+  # Quickshell desktop shell tree.
+  cp -a shell "$pkgdir/usr/share/omaniri/"
+
+  # Runtime version file.
+  install -Dm644 version "$pkgdir/usr/share/omaniri/version"
+}

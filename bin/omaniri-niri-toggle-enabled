@@ -1,0 +1,4 @@
+#!/bin/bash
+# omaniri:summary=Check if a Niri toggle is currently enabled.
+# omaniri:args=<flag-name>
+[[ -f "$HOME/.local/state/omaniri/toggles/niri/$1.kdl" ]]

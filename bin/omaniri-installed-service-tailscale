@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# omaniri:summary=Check whether Tailscale is installed and running
+# omaniri:hidden=true
+
+set -euo pipefail
+
+if omaniri-cmd-present tailscale && tailscale status --json >/dev/null 2>&1; then
+  exit 0
+fi
+
+systemctl is-active --quiet tailscaled.service >/dev/null 2>&1 || pgrep -x tailscaled >/dev/null 2>&1

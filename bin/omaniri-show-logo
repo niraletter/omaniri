@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# omaniri:summary=Display the Omaniri logo in the terminal using green color.
+
+clear
+echo -e "\033[32m"
+cat <$OMANIRI_PATH/logo.txt
+echo -e "\033[0m"
+echo

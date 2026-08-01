@@ -1,0 +1,236 @@
+// Omaniri — full Niri config. Structure adapted from the DMS-derived niri
+// port reference; keybinds are Omaniri's own translation (config/niri/binds.kdl,
+// ported from config/hypr/bindings.lua + default/hypr/bindings/*.lua).
+//
+// RELATIONSHIP TO binds.kDL: this file is the complete, ready-to-use config —
+// input, outputs, layout, animations, window rules, autostart, and an inlined
+// copy of the binds. binds.kdl remains the standalone binds-only list for
+// users who maintain their own config.kdl and just want to include Omaniri's
+// keybinds. Keep the two binds blocks in sync when editing either.
+//
+// THIS IS A BEST-EFFORT TRANSLATION, NOT A GENERATED 1:1 MAP of every Hyprland
+// bind. Cross-check action names against `niri msg action --help` and the Niri
+// wiki Key-Bindings page on your installed Niri version before trusting them —
+// action names have changed across Niri releases.
+
+input {
+    keyboard {
+        xkb {}
+        repeat-delay 300
+        repeat-rate 50
+    }
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+// ---- Outputs ---- (was config/hypr/monitors.lua)
+//
+// DROPPED from the Hyprland original: `hl.env("GDK_SCALE", ...)` and the
+// wildcard `output = ""` entry. Niri has no env-var directive and no
+// match-all wildcard — enumerate real connector names (`niri msg outputs`)
+// and give each its own block. GDK_SCALE belongs in your session/systemd
+// environment instead.
+output "eDP-1" {
+    scale 1.0
+    // mode "1920x1080@60.027"   // uncomment + set explicitly if "auto" picks wrong
+}
+// output "DP-2" {
+//     mode "2560x1440@144"
+//     scale 1.0
+//     position x=0 y=0
+// }
+
+// ---- Layout / look & feel ---- (was default/hypr/looknfeel.lua)
+//
+// DROPPED: Hyprland's dwindle layout selection and its tuning — Niri's
+// scrollable-columns model is the only layout it has.
+layout {
+    gaps 10
+    center-focused-column "never"
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        width 2
+        active-color "#33ccff"
+        inactive-color "#505050"
+    }
+    // Niri draws a focus-ring instead of Hyprland's border by default;
+    // configure `border {}` instead for a closer Hyprland-style look.
+}
+
+animations {
+    // Speed/curve numbers are illustrative starting points — Niri's animation
+    // model (named transition blocks + duration-ms/curve) doesn't map 1:1 from
+    // Hyprland's bezier curves + per-leaf speed multipliers.
+    window-open { duration-ms 150; curve "ease-out-quint"; }
+    window-close { duration-ms 150; curve "ease-out-quint"; }
+    workspace-switch { duration-ms 200; curve "ease-out-quint"; }
+}
+
+// ---- Window rules ---- (was default/hypr/windows.lua)
+//
+// DROPPED: `suppress_event = "maximize"` (no Niri equivalent) and Hyprland's
+// tag-based rule grouping (Niri window-rules have no tag mechanism).
+window-rule {
+    // Niri's opacity rule takes ONE float, not Hyprland's "active inactive"
+    // pair — split into a second rule below for inactive-window dimming.
+    opacity 0.985
+}
+window-rule {
+    match is-active=false
+    opacity 0.96
+}
+window-rule {
+    // Don't auto-focus empty-surface utility windows (was a no_focus rule).
+    match app-id="^$" title="^$"
+    open-focused false
+}
+
+// ---- Autostart ---- (was default/hypr/autostart.lua)
+spawn-at-startup "omaniri-shell"
+// Background daemon: swap in whatever Omaniri settles on for Niri wallpaper.
+// spawn-at-startup "swaybg" "-m" "fill"
+
+// ---- Keybinds ---- (inlined from config/niri/binds.kdl — see header note)
+binds {
+    // --- Apps (applications.lua) ---
+    // The omaniri-launch-* indirection resolves apps via Omaniri's own launch
+    // registry; shelling out to it is the correct behavior to keep.
+    Mod+Return { spawn "omaniri-launch-or-focus" "terminal"; }
+    Mod+Shift+Return { spawn "omaniri-launch-or-focus" "browser"; }
+    Mod+Shift+F { spawn "omaniri-launch-or-focus" "nautilus"; }
+    Mod+Alt+Shift+F { spawn "omaniri-launch-or-focus" "nautilus-cwd"; }
+    Mod+Shift+B { spawn "omaniri-launch-or-focus" "browser"; }
+    Mod+Shift+Alt+B { spawn "omaniri-launch-or-focus" "browser" "--private"; }
+    Mod+Shift+N { spawn "omaniri-launch-or-focus" "editor"; }
+
+    // --- Menu / shell (utilities.lua) ---
+    Mod+Space { spawn "omaniri-menu" "toggle"; }
+    Mod+Alt+Space { spawn "omaniri-menu" "toggle" "apps"; }
+    Mod+Ctrl+E { spawn "omaniri-shell" "shell" "toggle" "omaniri.emojis"; }
+    Mod+Ctrl+C { spawn "omaniri-menu" "toggle" "capture"; }
+    Mod+Ctrl+O { spawn "omaniri-menu" "toggle" "toggle"; }
+    Mod+Ctrl+H { spawn "omaniri-menu" "toggle" "hardware"; }
+    Mod+Escape { spawn "omaniri-menu" "toggle" "system"; }
+    Mod+K { spawn "omaniri-menu-keybindings"; }
+    Mod+Alt+K { spawn "omaniri-menu-tmux-keybindings"; }
+    Mod+Ctrl+K { spawn "omaniri-menu-herdr-keybindings"; }
+
+    // --- Media / hardware keys (media.lua) — pure spawns, port unchanged ---
+    XF86AudioRaiseVolume { allow-when-locked true; spawn "omaniri-audio-output-volume" "raise"; }
+    XF86AudioLowerVolume { allow-when-locked true; spawn "omaniri-audio-output-volume" "lower"; }
+    XF86AudioMute { allow-when-locked true; spawn "omaniri-audio-output-volume" "mute-toggle"; }
+    XF86AudioMicMute { allow-when-locked true; spawn "omaniri-audio-input-mute"; }
+    XF86MonBrightnessUp { allow-when-locked true; spawn "omaniri-brightness-display" "+5%"; }
+    XF86MonBrightnessDown { allow-when-locked true; spawn "omaniri-brightness-display" "5%-"; }
+    XF86AudioNext { allow-when-locked true; spawn "omaniri-shell" "media" "next"; }
+    XF86AudioPlay { allow-when-locked true; spawn "omaniri-shell" "media" "playPause"; }
+    XF86AudioPrev { allow-when-locked true; spawn "omaniri-shell" "media" "previous"; }
+
+    // --- Clipboard (clipboard.lua) ---
+    Mod+Ctrl+V { spawn "omaniri-shell" "shell" "toggle" "omaniri.clipboard"; }
+
+    // --- Window management (tiling.lua) ---
+    Mod+W { close-window; }
+    // Bulk-close has no Niri IPC bulk action; still shells out.
+    Ctrl+Alt+Delete { spawn "omaniri-niri-window-close-all"; }
+
+    // Hyprland's pseudotile has NO Niri equivalent — dropped, not mapped.
+
+    Mod+T { toggle-window-floating; }
+    Mod+F { fullscreen-window; }
+    // "Tiled full screen" (Hyprland's internal-only fullscreen) maps to the
+    // same fullscreen-window action; see omaniri-niri-window-tiled-fullscreen-
+    // toggle for the documented behavior change.
+    Mod+Ctrl+F { spawn "omaniri-niri-window-tiled-fullscreen-toggle"; }
+    Mod+Alt+F { maximize-column; }
+    Mod+O { spawn "omaniri-niri-window-pop"; }
+    // Niri's overview is the idiomatic replacement for several dropped Hyprland
+    // affordances — uncomment if you prefer it over window-pop on this key.
+    // Mod+O { toggle-overview; }
+    Mod+Alt+Home { spawn "omaniri-niri-window-width" "save"; }
+    Mod+Home { spawn "omaniri-niri-window-width" "restore"; }
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { switch-preset-window-height; }
+    // Workspace-layout-toggle has no Niri equivalent at all — bound anyway so
+    // the key fails loudly with an explanation instead of doing nothing.
+    Mod+L { spawn "omaniri-niri-workspace-layout-toggle"; }
+
+    // Column consume/expel — native Niri column actions with no Hyprland
+    // equivalent worth porting from; added because they're core to Niri's
+    // scrollable-columns workflow.
+    Mod+Comma { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+
+    // Directional focus: Niri splits Hyprland's uniform directional focus into
+    // column-level and window-level (within-column) actions. These map to the
+    // column-level actions, matching Hyprland's most common use case.
+    Mod+Left { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Up { focus-window-up; }
+    Mod+Down { focus-window-down; }
+
+    Mod+Shift+Left { move-column-left; }
+    Mod+Shift+Right { move-column-right; }
+    Mod+Shift+Up { move-window-up; }
+    Mod+Shift+Down { move-window-down; }
+
+    Mod+V { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    Alt+Tab { focus-window-previous; }
+
+    // Numbered workspaces 1-10: per-output indexes, matching Hyprland's model
+    // reasonably well. The "silent"/no-follow move variant has no confirmed
+    // Niri equivalent — dropped.
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+10 { focus-workspace 10; }
+    Mod+Shift+1 { move-window-to-workspace 1; }
+    Mod+Shift+2 { move-window-to-workspace 2; }
+    Mod+Shift+3 { move-window-to-workspace 3; }
+    Mod+Shift+4 { move-window-to-workspace 4; }
+    Mod+Shift+5 { move-window-to-workspace 5; }
+    Mod+Shift+6 { move-window-to-workspace 6; }
+    Mod+Shift+7 { move-window-to-workspace 7; }
+    Mod+Shift+8 { move-window-to-workspace 8; }
+    Mod+Shift+9 { move-window-to-workspace 9; }
+    Mod+Shift+10 { move-window-to-workspace 10; }
+
+    Mod+Tab { focus-workspace-down; }
+    Mod+Shift+Tab { focus-workspace-up; }
+
+    // Scratchpad: no named special-workspace concept in Niri. The community
+    // pattern is a regular named workspace by convention:
+    Mod+S { focus-workspace "scratch"; }
+
+    Mod+Shift+Alt+Left { move-column-to-monitor-left; }
+    Mod+Shift+Alt+Right { move-column-to-monitor-right; }
+    // No explicit up/down-monitor direction in Niri's left/right monitor model.
+
+    // --- Display / hardware toggles (utilities.lua) ---
+    Mod+Backspace { spawn "omaniri-niri-window-transparency-toggle"; }
+    Mod+Ctrl+Delete { spawn "omaniri-niri-monitor-internal" "toggle"; }
+    Mod+Ctrl+Alt+Delete { spawn "omaniri-niri-monitor-internal-mirror" "toggle"; }
+    "switch:on:Lid Switch" { spawn "omaniri-system-lid-close"; }
+    "switch:off:Lid Switch" { spawn "omaniri-niri-monitor-clamshell"; }
+
+    Print { spawn "omaniri-capture-screenshot"; }
+    Alt+Print { spawn "omaniri-capture-screenrecording" "--stop-recording"; }
+
+    // Mouse drag-to-move/resize is native Niri pointer interaction — nothing
+    // to configure for Hyprland's mouse:272/mouse:273 dispatcher binds.
+}
+
+// Per-user overrides (was config/hypr/*.lua via Lua require). Niri's
+// `include` directive needs 25.11+; on older Niri, hand-merge overrides here.
+// include "~/.config/niri/user.kdl"

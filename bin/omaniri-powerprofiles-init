@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# omaniri:summary=Set the correct power profile on boot based on current AC/battery state.
+
+exec omaniri-powerprofiles-set autodetect

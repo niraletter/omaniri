@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Open the Omaniri Discord community in the Discord app or a browser.
+
+invite="https://discord.gg/tXFUdasqhY"
+
+if omaniri-cmd-present discord; then
+  exec setsid discord --url -- "discord://-/invite/${invite##*/}"
+else
+  exec omaniri-launch-webapp "$invite"
+fi

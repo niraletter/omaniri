@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle bar visibility without killing the Omaniri shell
+# omaniri:args=[toggle|on|off]
+# omaniri:examples=omaniri toggle bar | omaniri toggle bar off | omaniri toggle bar on
+
+omaniri-toggle bar-off "${1:-toggle}"

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# omaniri:summary=NOT APPLICABLE ON NIRI -- documents why, rather than faking a toggle.
+# Ported from omaniri-hyprland-workspace-layout-toggle.
+#
+# Hyprland's dwindle-vs-scrolling toggle exists because Hyprland supports
+# multiple *pluggable* tiling layouts and this script swaps between two of
+# them per-workspace. Niri does not have pluggable layouts at all -- its
+# scrollable-tiling layout IS the compositor, unconditionally, on every
+# workspace. There is nothing to toggle: this script's entire premise does
+# not exist on Niri.
+#
+# Kept as a stub (rather than deleted) so a keybind that calls it fails
+# loudly with an explanation instead of silently doing nothing.
+
+echo "omaniri-niri-workspace-layout-toggle: Niri has only one tiling layout (scrollable tiling) -- there is nothing to toggle here. See PORT_STATUS.md." >&2
+exit 1

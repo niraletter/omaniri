@@ -1,0 +1,305 @@
+# Maintainer: Omaniri contributors
+# Vendored Omaniri settings package. Adapted from upstream omarchy-pkgs
+# pkgbuilds/omarchy-settings/PKGBUILD for the Omaniri tree (Niri session, no
+# uwsm). See pkgbuilds/omaniri/PKGBUILD for the versioning conventions; the
+# two packages must carry identical _tag/_commit/pkgver.
+pkgname='omaniri-settings'
+_tag=''
+_commit=''
+pkgver=4.0.0
+pkgrel=1
+pkgdesc='Omaniri user defaults, /etc/skel content, fonts, plymouth theme, and support helpers'
+arch=('any')
+url='https://github.com/niraletter/omaniri'
+license=('MIT')
+conflicts=('omaniri-settings-dev')
+
+# `/etc/default/limine` is intentionally NOT owned by this package. The ISO
+# orchestrator generates it at install time from the resolved target boot
+# cmdline. We ship a template under /usr/share/omaniri/default/limine/ for the
+# orchestrator to read.
+#
+# limine + limine-mkinitcpio-hook + limine-snapper-sync + snapper are NOT in
+# depends because this package gets installed into the live ISO env (for
+# plymouth / /etc/skel seeding) where there is no ESP and the mkinitcpio hook
+# would fail trying to deploy Limine.
+depends=(
+  'bash'
+  'curl'
+  'gum'
+  'hicolor-icon-theme'
+  'plymouth'
+)
+
+makedepends=(
+  'git'
+  'imagemagick'
+)
+
+# backup=() is pacman's hook for protecting user edits to package-owned files
+# on upgrade. Only the paths the package actually installs into /etc qualify.
+# The etc-overrides set ships at /usr/share/omaniri/etc-overrides/ and is
+# cp -f'd by post_install — those paths are unowned by pacman and the
+# scriptlet WILL clobber user edits on each upgrade (documented limitation).
+backup=(
+  'etc/fastfetch/config.jsonc'
+  'etc/mkinitcpio.conf.d/omaniri_hooks.conf'
+  'etc/mkinitcpio.conf.d/thunderbolt_module.conf'
+  'etc/limine-entry-tool.d/omaniri-defaults.conf'
+  'etc/limine-entry-tool.d/omaniri-uki.conf'
+  'etc/docker/daemon.json'
+  'etc/gnupg/dirmngr.conf'
+  'etc/sysctl.d/99-omaniri-sysctl.conf'
+  'etc/sysctl.d/90-omaniri-file-watchers.conf'
+  'etc/modprobe.d/omaniri-usb-autosuspend.conf'
+  'etc/systemd/logind.conf.d/10-ignore-power-button.conf'
+  'etc/systemd/logind.conf.d/20-inhibit-delay.conf'
+  'etc/systemd/resolved.conf.d/10-disable-multicast.conf'
+  'etc/systemd/resolved.conf.d/20-docker-dns.conf'
+  'etc/systemd/system.conf.d/10-faster-shutdown.conf'
+  'etc/systemd/system/user@.service.d/10-faster-shutdown.conf'
+  'etc/systemd/system/docker.service.d/no-block-boot.conf'
+  'etc/systemd/system/plocate-updatedb.service.d/ac-only.conf'
+  'etc/systemd/system.conf.d/20-omaniri-nofile.conf'
+  'etc/systemd/user.conf.d/20-omaniri-nofile.conf'
+  'etc/systemd/oomd.conf.d/10-omaniri.conf'
+  'etc/sddm.conf.d/10-theme.conf'
+  'etc/sddm.conf.d/10-wayland.conf'
+)
+
+optdepends=(
+  'omaniri: Full Omaniri desktop'
+  'inxi: System information for omaniri-debug'
+  'fastfetch: System information for omaniri-upload-log'
+  'limine: Bootloader the shipped /etc/mkinitcpio.conf.d/ and /etc/limine-entry-tool.d/ drop-ins are for'
+  'limine-mkinitcpio-hook: Picks up the shipped /etc/mkinitcpio.conf.d/omaniri_hooks.conf'
+  'limine-snapper-sync: Boot-entry sync for snapper snapshots'
+  'zram-generator: Reads the shipped zram drop-in to create the compressed swap device'
+  'snapper: Used with the shipped /etc/snapper/config-templates/omaniri template'
+)
+
+install='omaniri-settings.install'
+
+# Live config files the package can't own outright (the path is owned by an
+# upstream Arch package): ship them at /usr/share/omaniri/etc-overrides/ and
+# cp -f into place from post_install. See omaniri-settings.install.
+_etc_override_paths=(
+  'etc/security/faillock.conf'
+  'etc/nsswitch.conf'
+  'etc/cups/cups-browsed.conf'
+  'etc/plymouth/plymouthd.conf'
+)
+
+# Source: the pinned release commit; set OMANIRI_SRC=/path/to/checkout to
+# build from a local source tree instead.
+if [[ -n "${OMANIRI_SRC:-}" ]]; then
+  source=()
+  sha256sums=()
+else
+  source=("omaniri::git+https://github.com/niraletter/omaniri.git#commit=${_commit}")
+  sha256sums=('SKIP')
+fi
+
+prepare() {
+  if [[ -n "${OMANIRI_SRC:-}" ]]; then
+    rm -rf "$srcdir/omaniri"
+    mkdir -p "$srcdir/omaniri"
+    cp -a "${OMANIRI_SRC}/." "$srcdir/omaniri/"
+  fi
+}
+
+package() {
+  cd "$srcdir/omaniri"
+
+  # /etc/skel/.config from config/** — system-wide default user config.
+  install -d "$pkgdir/etc/skel/.config"
+  cp -a config/. "$pkgdir/etc/skel/.config/"
+
+  # Fastfetch reads /etc/fastfetch/config.jsonc when no user config exists.
+  install -Dm644 etc/fastfetch/config.jsonc "$pkgdir/etc/fastfetch/config.jsonc"
+
+  # ALSO ship config/** under /usr/share/omaniri/config/. Used as the
+  # source-of-truth by omaniri-refresh-config, omaniri-reinstall-configs,
+  # and other commands that copy individual files into a running user's
+  # ~/.config.
+  install -d "$pkgdir/usr/share/omaniri/config"
+  cp -a config/. "$pkgdir/usr/share/omaniri/config/"
+
+  # Package-owned defaults with real system/XDG locations. User config remains
+  # higher priority: ~/.config/omaniri/session-defaults, the legacy
+  # ~/.config/uwsm/default, ~/.config/environment.d, ~/.config/fontconfig,
+  # ~/.config/xdg-terminals.list, ~/.config/mimeapps.list, and
+  # ~/.config/systemd/user can all override these.
+  #
+  # NOTE: upstream's uwsm env.d file is gone — the Niri session sources
+  # default/bash/env-bootstrap directly via default/wayland-sessions/
+  # omaniri-session, which the wholesale default/** copy below already ships.
+  install -Dm644 default/environment.d/10-omaniri-fcitx.conf "$pkgdir/usr/lib/environment.d/10-omaniri-fcitx.conf"
+  install -Dm644 default/fontconfig/conf.avail/50-omaniri.conf "$pkgdir/usr/share/fontconfig/conf.avail/50-omaniri.conf"
+  install -d "$pkgdir/etc/fonts/conf.d"
+  ln -sfn /usr/share/fontconfig/conf.avail/50-omaniri.conf "$pkgdir/etc/fonts/conf.d/50-omaniri.conf"
+  install -Dm644 default/xdg-terminal-exec/hyprland-xdg-terminals.list "$pkgdir/usr/share/xdg-terminal-exec/hyprland-xdg-terminals.list"
+  install -Dm644 default/applications/mimeapps.list "$pkgdir/usr/share/applications/mimeapps.list"
+  install -Dm644 default/systemd/user/bt-agent.service "$pkgdir/usr/lib/systemd/user/bt-agent.service"
+  install -Dm644 default/systemd/user/omaniri-sleep-lock.service "$pkgdir/usr/lib/systemd/user/omaniri-sleep-lock.service"
+  install -Dm644 default/systemd/user/omaniri-recover-internal-monitor.service "$pkgdir/usr/lib/systemd/user/omaniri-recover-internal-monitor.service"
+  install -Dm644 default/systemd/user/omaniri-migrate-notify.service "$pkgdir/usr/lib/systemd/user/omaniri-migrate-notify.service"
+  install -Dm644 default/systemd/user/omaniri-tailscale-receive.service "$pkgdir/usr/lib/systemd/user/omaniri-tailscale-receive.service"
+  install -Dm644 default/systemd/user/omaniri-fcitx5.service "$pkgdir/usr/lib/systemd/user/omaniri-fcitx5.service"
+  install -Dm644 default/systemd/user/omaniri-crash-watch.service "$pkgdir/usr/lib/systemd/user/omaniri-crash-watch.service"
+  install -Dm644 default/systemd/user/omaniri-speaker-tuning.service "$pkgdir/usr/lib/systemd/user/omaniri-speaker-tuning.service"
+  # Marks app.slice (and only app.slice) as a systemd-oomd kill candidate.
+  # Without uwsm there is no per-app scoping anymore; see the drop-in's own
+  # header for the honest state of pressure-based kills.
+  install -Dm644 default/systemd/user/app.slice.d/10-oomd.conf "$pkgdir/usr/lib/systemd/user/app.slice.d/10-oomd.conf"
+  install -Dm644 default/systemd/zram-generator.conf.d/90-omaniri.conf "$pkgdir/usr/lib/systemd/zram-generator.conf.d/90-omaniri.conf"
+
+  # Same for applications/** — used by omaniri-refresh-applications,
+  # omaniri-install-gaming-*, etc. to copy .desktop files into ~/.local/share.
+  install -d "$pkgdir/usr/share/omaniri/applications"
+  cp -a applications/. "$pkgdir/usr/share/omaniri/applications/"
+  rm -rf "$pkgdir/usr/share/omaniri/applications/icons"
+
+  # /etc tree (drop-ins the package fully owns + the etc-override files we
+  # stage separately below).
+  install -d "$pkgdir/etc"
+  cp -a etc/. "$pkgdir/etc/"
+  # sudoers.d files must be mode 0440 or sudo will refuse them, and the
+  # directory must be 0750 to match the Arch sudo package's filesystem
+  # convention.
+  if [[ -d "$pkgdir/etc/sudoers.d" ]]; then
+    chmod 0750 "$pkgdir/etc/sudoers.d"
+    chmod 0440 "$pkgdir/etc/sudoers.d"/*
+  fi
+
+  # Stage upstream-owned files at /usr/share/omaniri/etc-overrides/ instead of
+  # owning their live /etc paths directly. post_install copies them in.
+  install -d "$pkgdir/usr/share/omaniri/etc-overrides"
+  install -Dm644 default/bashrc \
+    "$pkgdir/usr/share/omaniri/etc-overrides/dot.bashrc"
+  cat >"$pkgdir/usr/share/omaniri/etc-overrides/os-release" <<EOF
+NAME="Omaniri"
+PRETTY_NAME="Omaniri"
+ID=omaniri
+ID_LIKE=arch
+BUILD_ID="$pkgver"
+VERSION_ID="$pkgver"
+ANSI_COLOR="38;2;158;206;106"
+HOME_URL="https://github.com/niraletter/omaniri"
+DOCUMENTATION_URL="https://github.com/niraletter/omaniri"
+SUPPORT_URL="https://github.com/niraletter/omaniri/issues"
+BUG_REPORT_URL="https://github.com/niraletter/omaniri/issues"
+LOGO=omaniri
+EOF
+  for path in "${_etc_override_paths[@]}"; do
+    case "$path" in
+      'etc/security/faillock.conf')
+        mv "$pkgdir/$path" "$pkgdir/usr/share/omaniri/etc-overrides/security-faillock.conf" ;;
+      'etc/nsswitch.conf')
+        mv "$pkgdir/$path" "$pkgdir/usr/share/omaniri/etc-overrides/nsswitch.conf" ;;
+      'etc/cups/cups-browsed.conf')
+        mv "$pkgdir/$path" "$pkgdir/usr/share/omaniri/etc-overrides/cups-cups-browsed.conf" ;;
+      'etc/plymouth/plymouthd.conf')
+        mv "$pkgdir/$path" "$pkgdir/usr/share/omaniri/etc-overrides/plymouth-plymouthd.conf" ;;
+    esac
+  done
+  # The directories under /etc we just emptied are upstream-owned; remove our
+  # empty placeholders so pacman doesn't complain.
+  rmdir "$pkgdir/etc/security" 2>/dev/null || true
+  rmdir "$pkgdir/etc/cups" 2>/dev/null || true
+  rmdir "$pkgdir/etc/plymouth" 2>/dev/null || true
+
+  # /etc/skel/.local/share/applications from applications/**.
+  install -d "$pkgdir/etc/skel/.local/share/applications"
+  if compgen -G 'applications/*.desktop' >/dev/null; then
+    cp applications/*.desktop "$pkgdir/etc/skel/.local/share/applications/"
+  fi
+  if [[ -d applications/hidden ]] && compgen -G 'applications/hidden/*.desktop' >/dev/null; then
+    cp applications/hidden/*.desktop "$pkgdir/etc/skel/.local/share/applications/"
+  fi
+
+  # Package-owned application icons in standard freedesktop hicolor paths.
+  if [[ -d applications/icons ]] && compgen -G 'applications/icons/*' >/dev/null; then
+    install -d "$pkgdir/usr/share/icons/hicolor/256x256/apps"
+    install -d "$pkgdir/usr/share/icons/hicolor/48x48/apps"
+    for icon in applications/icons/*; do
+      [[ -f $icon ]] || continue
+      icon_name=$(basename "$icon")
+      icon_id=$(printf '%s\n' "${icon_name%.*}" \
+        | tr '[:upper:]' '[:lower:]' | sed 's/[^[:alnum:]]\+/-/g; s/^-//; s/-$//')
+      case "$icon_name" in
+        *.svg)
+          install -Dm644 "$icon" "$pkgdir/usr/share/icons/hicolor/scalable/apps/$icon_id.svg"
+          ;;
+        *)
+          magick "$icon" -thumbnail 256x256 -background transparent -gravity center -extent 256x256 \
+            "PNG32:$pkgdir/usr/share/icons/hicolor/256x256/apps/$icon_id.png"
+          magick "$icon" -thumbnail 48x48 -background transparent -gravity center -extent 48x48 \
+            "PNG32:$pkgdir/usr/share/icons/hicolor/48x48/apps/$icon_id.png"
+          ;;
+      esac
+    done
+  fi
+
+  # default/** ships to /usr/share/omaniri/default/.
+  install -d "$pkgdir/usr/share/omaniri/default"
+  cp -a default/. "$pkgdir/usr/share/omaniri/default/"
+
+  # Snapper config template used by the install-time `snapper create-config`.
+  install -Dm644 default/snapper/root \
+    "$pkgdir/etc/snapper/config-templates/omaniri"
+
+  # SDDM theme/session assets. The installer only writes autologin.conf
+  # because that embeds the install user.
+  install -d -m 0755 "$pkgdir/usr/share/sddm/themes"
+  cp -a default/sddm/omaniri "$pkgdir/usr/share/sddm/themes/"
+  find "$pkgdir/usr/share/sddm/themes/omaniri" -type d -exec chmod 0755 {} +
+  find "$pkgdir/usr/share/sddm/themes/omaniri" -type f -exec chmod 0644 {} +
+  install -Dm644 default/sddm/hyprland.lua "$pkgdir/usr/share/sddm/hyprland.lua"
+  install -Dm644 default/wayland-sessions/omaniri.desktop \
+    "$pkgdir/usr/local/share/wayland-sessions/omaniri.desktop"
+
+  # Plymouth theme (already omaniri-branded in this tree).
+  install -d -m 0755 "$pkgdir/usr/share/plymouth/themes/omaniri"
+  cp -a default/plymouth/. "$pkgdir/usr/share/plymouth/themes/omaniri/"
+  find "$pkgdir/usr/share/plymouth/themes/omaniri" -type d -exec chmod 0755 {} +
+  find "$pkgdir/usr/share/plymouth/themes/omaniri" -type f -exec chmod 0644 {} +
+
+  # System font.
+  install -Dm644 default/fonts/omaniri/omaniri.ttf "$pkgdir/usr/share/fonts/omaniri/omaniri.ttf"
+
+  # systemd system-sleep hook (lazily unmounts gvfsd-fuse mounts before
+  # suspend/hibernate); also shipped under default/** above.
+  install -Dm755 default/systemd/system-sleep/unmount-fuse \
+    "$pkgdir/usr/lib/systemd/system-sleep/unmount-fuse"
+
+  # Branding assets (logos, icons).
+  install -Dm644 logo.txt "$pkgdir/usr/share/omaniri/logo.txt"
+  install -Dm644 logo.svg "$pkgdir/usr/share/omaniri/logo.svg"
+  install -Dm644 icon.txt "$pkgdir/usr/share/omaniri/icon.txt"
+  install -Dm644 icon.png "$pkgdir/usr/share/omaniri/icon.png"
+
+  # Standard icon-theme locations so os-release's LOGO=omaniri resolves.
+  install -Dm644 icon.png "$pkgdir/usr/share/pixmaps/omaniri.png"
+  install -Dm644 icon.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/omaniri.png"
+
+  # Seed the user-editable branding files into /etc/skel.
+  install -Dm644 logo.txt "$pkgdir/etc/skel/.config/omaniri/branding/screensaver.txt"
+  install -Dm644 icon.txt "$pkgdir/etc/skel/.config/omaniri/branding/about.txt"
+
+  # Other static per-user defaults seeded via /etc/skel for new users.
+  install -Dm644 default/hypr/toggles/flags.lua \
+    "$pkgdir/etc/skel/.local/state/omaniri/toggles/hypr/flags.lua"
+  install -Dm644 default/nautilus-python/extensions/localsend.py \
+    "$pkgdir/etc/skel/.local/share/nautilus-python/extensions/localsend.py"
+  install -Dm644 default/nautilus-python/extensions/transcode.py \
+    "$pkgdir/etc/skel/.local/share/nautilus-python/extensions/transcode.py"
+  install -Dm644 default/tensaku/state.toml \
+    "$pkgdir/etc/skel/.local/state/tensaku/state.toml"
+
+  # Support binaries needed before the full omaniri package is installed
+  # (used by ISO/recovery flows).
+  install -Dm755 bin/omaniri-upload-log "$pkgdir/usr/bin/omaniri-upload-log"
+  install -Dm755 bin/omaniri-debug      "$pkgdir/usr/bin/omaniri-debug"
+  install -Dm755 bin/omaniri-debug-idle "$pkgdir/usr/bin/omaniri-debug-idle"
+}

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# omaniri:summary=Remove the Xbox Cloud Gaming web app.
+
+set -e
+
+omaniri-webapp-remove "Xbox Cloud Gaming"

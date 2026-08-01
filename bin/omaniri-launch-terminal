@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# omaniri:summary=Launch a terminal in the active terminal's current directory
+# omaniri:args=[command...]
+
+exec setsid xdg-terminal-exec --dir="$(omaniri-cmd-terminal-cwd)" "$@"

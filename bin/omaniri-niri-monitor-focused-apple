@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# omaniri:summary=Return success if the focused or named Niri output is an Apple display.
+# omaniri:args=[monitor]
+# Ported from omaniri-hyprland-monitor-focused-apple. Field names differ:
+# Hyprland's `make`/`model` become Niri's `make`/`model` too (same names,
+# confirmed against `niri msg -j outputs` output), so only the focus lookup changes.
+
+monitor="${1:-}"
+
+if [[ -z $monitor ]]; then
+  monitor=$(omaniri-niri-monitor-focused)
+fi
+
+niri msg -j outputs | jq -e --arg monitor "$monitor" '
+  to_entries[]
+  | select(.value.name == $monitor)
+  | select(.value.make == "Apple Computer Inc" and (.value.model | test("StudioDisplay|ProDisplayXDR|Studio XDR")))
+' >/dev/null

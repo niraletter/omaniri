@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# omaniri:summary=Toggle persistent flags by copying KDL snippets into an Include-d directory.
+# omaniri:args=<flag-name> [on|off|toggle]
+# Ported from omaniri-hyprland-toggle.
+#
+# Behavior preserved almost exactly: instead of copying a `.lua` file for
+# Omarchy's own Lua-based Hyprland config loader, this copies a `.kdl` file
+# into a directory Niri's config `include`s. Niri reloads its config file
+# automatically on save/change (no `hyprctl reload` equivalent call needed),
+# so the trailing reload call is dropped -- writing/removing the file into a
+# path Niri already watches is enough to trigger the reload itself.
+#
+# REQUIRES: your Niri config.kdl must contain a line like
+#   include "~/.local/state/omaniri/toggles/niri/*.kdl"
+# for these flags to actually take effect. This is a one-time setup step this
+# script does not perform for you.
+
+usage() {
+  echo "Usage: omaniri-niri-toggle <flag-name> [on|off|toggle]" >&2
+}
+
+if (($# < 1)); then
+  usage
+  exit 1
+fi
+
+FLAG_NAME="$1"
+ACTION="${2:-toggle}"
+FLAG_FILE="$HOME/.local/state/omaniri/toggles/niri/$FLAG_NAME.kdl"
+FLAG_SOURCE="$OMANIRI_PATH/default/niri/toggles/$FLAG_NAME.kdl"
+
+on() {
+  if [[ -f $FLAG_SOURCE ]]; then
+    mkdir -p "$(dirname "$FLAG_FILE")"
+    cp "$FLAG_SOURCE" "$FLAG_FILE"
+  else
+    echo "Flag not found: $FLAG_NAME" >&2
+    exit 1
+  fi
+}
+
+off() {
+  rm -f "$FLAG_FILE"
+}
+
+toggle() {
+  if [[ -f $FLAG_FILE ]]; then
+    off
+    echo "off"
+  else
+    on
+    echo "on"
+  fi
+}
+
+case $ACTION in
+  on) on ;;
+  off) off ;;
+  toggle) toggle ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac

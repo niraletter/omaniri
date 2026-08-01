@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# omaniri:summary=Dismiss a notification by summary substring. Used by the first-run notifications to dismiss them after clicking for action.
+# omaniri:args=<summary>
+
+if (($# == 0)); then
+  echo "Usage: omaniri-notification-dismiss <summary>"
+  exit 1
+fi
+
+omaniri-shell -q notifications dismiss "$1"

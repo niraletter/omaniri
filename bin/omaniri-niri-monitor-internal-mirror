@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# omaniri:summary=NO NATIVE NIRI EQUIVALENT -- best-effort via wl-mirror.
+# omaniri:args=<on|off|toggle|recover>
+# Ported from omaniri-hyprland-monitor-internal-mirror.
+#
+# Niri has no compositor-level output mirroring at all (confirmed against
+# Niri's own screencasting docs, which explicitly say mirroring is not
+# built in). The documented workaround upstream is spawning `wl-mirror` as a
+# regular window and treating it like any other floating window pinned to a
+# display -- it is NOT the same feature: it is a real client rendering a
+# real copy of the output, not a compositor-level mirror, so window-manager
+# actions (fullscreen, floating) apply to it like any other app, and if
+# `wl-mirror` isn't installed this silently cannot work.
+#
+# This script requires `wl-mirror` to be installed and does not attempt to
+# replicate the flag-file/state-file bookkeeping the Hyprland version had,
+# since the underlying mechanism is fundamentally different (a client process
+# vs. a compositor output property).
+
+command -v wl-mirror >/dev/null 2>&1 || {
+  omaniri-notification-send -g 󰍹 "wl-mirror is required for display mirroring on Niri and is not installed"
+  exit 1
+}
+
+STATE_DIR="$HOME/.local/state/omaniri/toggles/niri"
+PID_FILE="$STATE_DIR/wl-mirror.pid"
+
+INTERNAL=$(omaniri-niri-monitor-laptop)
+EXTERNAL=$(niri msg -j outputs | jq -r 'to_entries[] | select(.value.name | test("^(eDP|LVDS|DSI)-") | not) | .value.name' | head -n 1)
+
+on() {
+  [[ -n $EXTERNAL ]] || { omaniri-notification-send -g 󰍹 "No external monitors found for mirror"; exit 1; }
+  [[ -n $INTERNAL ]] || { omaniri-notification-send -g 󰍹 "No laptop monitor found to mirror"; exit 1; }
+
+  mkdir -p "$STATE_DIR"
+  wl-mirror "$INTERNAL" &
+  echo $! >"$PID_FILE"
+  omaniri-notification-send -g 󰍹 "Mirroring $INTERNAL via wl-mirror (move/fullscreen it onto $EXTERNAL manually)"
+}
+
+off() {
+  [[ -f $PID_FILE ]] || return 0
+  kill "$(<"$PID_FILE")" 2>/dev/null
+  rm -f "$PID_FILE"
+  omaniri-notification-send -g 󰍹 "Mirroring stopped"
+}
+
+case "${1:-}" in
+  on) on ;;
+  off) off ;;
+  toggle) [[ -f $PID_FILE ]] && off || on ;;
+  recover) : ;;  # no compositor-level state to recover, unlike Hyprland
+  *)
+    echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+    exit 1
+    ;;
+esac

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# omaniri:summary=Check whether Dropbox is installed and running
+# omaniri:hidden=true
+
+set -euo pipefail
+
+if omaniri-cmd-present dropbox-cli && dropbox-cli running >/dev/null 2>&1; then
+  exit 0
+fi
+
+pgrep -x dropbox >/dev/null 2>&1

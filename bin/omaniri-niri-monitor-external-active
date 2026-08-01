@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omaniri:summary=Returns true when Niri has an active (enabled) external monitor
+# omaniri:hidden=true
+# Ported from omaniri-hyprland-monitor-external-active.
+# Niri's `outputs` JSON does not carry a `disabled` boolean the way Hyprland's
+# does -- an output that has been turned off with `niri msg output <name> off`
+# is still listed, but its `current_mode` becomes null. We treat "active" as
+# "not an internal panel, and has a current mode".
+
+niri msg -j outputs | jq -e '
+  to_entries[]
+  | select(.value.name | test("^(eDP|LVDS|DSI)-") | not)
+  | select(.value.current_mode != null)
+' >/dev/null 2>&1
