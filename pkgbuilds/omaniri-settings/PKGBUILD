@@ -134,7 +134,7 @@ package() {
   # NOTE: upstream's uwsm env.d file is gone — the Niri session sources
   # default/bash/env-bootstrap directly via default/wayland-sessions/
   # omaniri-session, which the wholesale default/** copy below already ships.
-  install -Dm644 default/environment.d/10-omaniri-fcitx.conf "$pkgdir/usr/lib/environment.d/10-omaniri-fcitx.conf"
+  install -Dm644 default/environment.d/10-env.conf "$pkgdir/usr/lib/environment.d/10-env.conf"
   install -Dm644 default/fontconfig/conf.avail/50-omaniri.conf "$pkgdir/usr/share/fontconfig/conf.avail/50-omaniri.conf"
   install -d "$pkgdir/etc/fonts/conf.d"
   ln -sfn /usr/share/fontconfig/conf.avail/50-omaniri.conf "$pkgdir/etc/fonts/conf.d/50-omaniri.conf"
