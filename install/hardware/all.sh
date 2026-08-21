@@ -16,6 +16,11 @@ run_logged "$OMANIRI_INSTALL/hardware/vulkan.sh"
 run_logged "$OMANIRI_INSTALL/hardware/intel/video-acceleration.sh"
 run_logged "$OMANIRI_INSTALL/hardware/intel/lpmd.sh"
 run_logged "$OMANIRI_INSTALL/hardware/intel/thermald.sh"
+# Swap in the Panther Lake kernel before anything pulls DKMS modules in.
+# intel-ipu7-camera drags in ipu7-drivers, vision-drivers and v4l2loopback,
+# and building all three against the stock kernel only to rebuild them against
+# linux-ptl and tear the first set down again cost ~25s of the install.
+run_logged "$OMANIRI_INSTALL/hardware/intel/ptl-kernel.sh"
 run_logged "$OMANIRI_INSTALL/hardware/intel/ipu7-camera.sh"
 run_logged "$OMANIRI_INSTALL/hardware/intel/fred.sh"
 run_logged "$OMANIRI_INSTALL/hardware/intel/fix-wifi7-eht.sh"
@@ -30,6 +35,7 @@ run_logged "$OMANIRI_INSTALL/hardware/framework/qmk-hid.sh"
 
 run_logged "$OMANIRI_INSTALL/hardware/apple/fix-spi-keyboard.sh"
 run_logged "$OMANIRI_INSTALL/hardware/apple/fix-suspend-nvme.sh"
+run_logged "$OMANIRI_INSTALL/hardware/apple/fix-t2.sh"
 run_logged "$OMANIRI_INSTALL/hardware/apple/fix-brcmfmac-supplicant.sh"
 
 run_logged "$OMANIRI_INSTALL/hardware/lenovo/fix-yoga-pro7-bass-speakers.sh"
