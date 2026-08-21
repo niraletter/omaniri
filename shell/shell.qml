@@ -1008,6 +1008,14 @@ ShellRoot {
       shell.hide(id)
     }
 
+    // Whether a summonable surface (launcher, menu, panel, ...) is currently
+    // open. Niri exposes no layer-shell state over IPC, so this shell-side
+    // query is the honest way for scripts and the acceptance harness to check
+    // surface visibility.
+    function isPluginOpen(id: string): string {
+      return shell.isPluginOpen(id) ? "true" : "false"
+    }
+
     function toggle(id: string, payloadJson: string): void {
       shell.toggle(id, payloadJson)
     }
