@@ -26,10 +26,6 @@ omaniri-update-requires-free-space
 [[ ${1:-} != "-y" ]] || export OMANIRI_UPDATE_UNATTENDED=1
 
 if [[ ${1:-} == "-y" ]] || omaniri-update-confirm; then
-  # Before the snapshot: the cache is on the snapshotted subvolume, so pruning
-  # after it frees nothing until that snapshot ages out.
-  omaniri-update-pkg-prune
-
   # 127 means Snapper is deliberately absent. Any other failure already said
   # what went wrong, and a missing snapshot is not worth blocking an update
   # over, but it must not pass for one either.
@@ -38,27 +34,9 @@ if [[ ${1:-} == "-y" ]] || omaniri-update-confirm; then
 
   omaniri-update-stay-awake start
 
-  omaniri-update-dev
-  omaniri-update-keyring
-
-  # Migrations ship with the packages installed here and are written against
-  # them, so everything below waits on this finishing. An upgrade that stopped
-  # takes the update with it rather than migrating against what is still on disk.
   omaniri-update-system-pkgs
-  omaniri-migrate
-  omaniri-hook post-update
   omaniri-update-aur-pkgs
-  omaniri-update-mise
-  omaniri-update-orphan-pkgs
 
-  omaniri-update-analyze-logs
-  omaniri-update-status
-
-  # Release update-owned inhibitors before offering a reboot. A confirmed
-  # reboot can terminate this process before its EXIT trap gets a chance to
-  # remove the persistent Stay Awake marker.
   omaniri-update-stay-awake stop
   trap - EXIT
-
-  omaniri-update-restart
 fi
