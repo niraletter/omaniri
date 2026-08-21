@@ -36,6 +36,11 @@ if [[ ${1:-} == "-y" ]] || omaniri-update-confirm; then
 
   omaniri-update-system-pkgs
   omaniri-update-aur-pkgs
+  omaniri-update-mise
+  omaniri-update-orphan-pkgs
+
+  omaniri-update-analyze-logs
+  omaniri-update-status
 
   omaniri-update-stay-awake stop
   trap - EXIT
